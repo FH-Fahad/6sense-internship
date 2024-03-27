@@ -1,0 +1,25 @@
+10 most popular Pokemon.
+
+1. Pikachu
+2. Charmander
+3. Bulbasaur
+4. Squirtle
+5. Jigglypuff
+
+5.1. Eevee
+5.2. Vaporeon
+5.3. Flareon
+5.4. Jolteon
+5.5. Espeon
+
+5.1.1. Wigglytuff
+5.1.2. Clefairy
+5.1.3. Clefable
+5.1.4. Vulpix
+5.1.5. Ninetales
+
+6. Meowth
+7. Psyduck
+8. Snorlax
+9. Mewtwo
+10. Mew
