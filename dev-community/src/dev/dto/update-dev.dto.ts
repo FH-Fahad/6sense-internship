@@ -14,4 +14,8 @@ export class UpdateDevDto extends PartialType(CreateDevDto) {
     @IsString()
     @IsOptional()
     experience?: string;
+
+    @IsString()
+    @IsOptional()
+    refreshToken?: string;
 }

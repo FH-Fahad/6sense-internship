@@ -1,26 +1,55 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Post } from 'src/schema/post.schema';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class PostService {
+  private logger = new Logger();
+  constructor(
+    @InjectModel('Post') private readonly postModel: Model<Post>
+  ) { }
+
   create(createPostDto: CreatePostDto) {
-    return 'This action adds a new post';
+    const { title, content } = createPostDto;
+    const post = new this.postModel({ title, content });
+
+    try {
+      this.logger.log(`Creating a new post with title: ${title}`);
+      return post.save();
+    } catch (error) {
+      this.logger.error(`Error creating a new post with title: ${title}`);
+      throw new InternalServerErrorException(`Something went wrong`);
+    }
   }
 
   findAll() {
-    return `This action returns all post`;
+    return this.postModel.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} post`;
+  findOne(id: string) {
+    const post = this.postModel.findById(id);
+
+    if (!post) {
+      this.logger.error(`Post with id: ${id} not found`);
+      throw new InternalServerErrorException(`Post with id: ${id} not found`);
+    }
+    this.logger.log(`Retrieving a post with id: ${id}`);
+    return this.postModel.findById(id);
   }
 
-  update(id: number, updatePostDto: UpdatePostDto) {
-    return `This action updates a #${id} post`;
+  async update(id: string, updatePostDto: UpdatePostDto) {
+    const post = await this.findOne(id);
+    this.logger.log(`${post.title} Updating info.`);
+    return this.postModel.findByIdAndUpdate(id, updatePostDto, { new: true });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} post`;
+  async remove(id: string) {
+    const post = await this.findOne(id);
+    this.logger.log(`${post.title} Removed`);
+    return this.postModel.findByIdAndDelete(id);
   }
 }

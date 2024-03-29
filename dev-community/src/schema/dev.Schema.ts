@@ -13,6 +13,9 @@ export class Dev {
 
     @Prop({ required: true })
     experience: string;
+
+    @Prop({ required: false })
+    refreshToken: string;
 }
 
 export const DevSchema = SchemaFactory.createForClass(Dev);
