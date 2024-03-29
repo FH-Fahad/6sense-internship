@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { User } from './auth/auth.entity';
 import { TasksModule } from './tasks/tasks.module';
 import { Task } from './tasks/entities/task.entity';
+import env from './config/app.config';
 
 @Module({
   imports: [
@@ -12,10 +13,10 @@ import { Task } from './tasks/entities/task.entity';
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
-      port: 5432,
+      port: env.DB_PORT,
       username: 'postgres',
       password: 'postgres',
-      database: 'UserDB',
+      database: "UserDB",
       entities: [Task, User],
       synchronize: true,
     }),

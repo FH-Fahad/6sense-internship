@@ -4,6 +4,7 @@ import { Task } from './entities/task.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { User } from 'src/auth/auth.entity';
 
 @Injectable()
 export class TasksService {
@@ -12,30 +13,41 @@ export class TasksService {
     private taskRepository: Repository<Task>,
   ) {}
 
-  create(createTaskDto: CreateTaskDto) {
-    const newTask = this.taskRepository.create(createTaskDto);
-    return this.taskRepository.save(newTask);
+  create(createTaskDto: CreateTaskDto, user: User) {
+    const { title, description, status } = createTaskDto;
+    const task = new Task();
+    task.title = title;
+    task.description = description;
+    task.status = status;
+    task.user = user;
+    return this.taskRepository.save(task);
   }
 
-  findAll() {
-    return this.taskRepository.find();
+  async getTasks(user: User) {
+    const query = this.taskRepository.createQueryBuilder('task');
+    query.where({ user });
+
+    const tasks = await query.getMany();
+    return tasks;
   }
 
-  findOne(id: string) {
-    const task = this.taskRepository.findOneBy({ id });
+  findOne(id: string, user: User) {
+    const task = this.taskRepository.findOne({
+      where: { id, user },
+    });
     if (!task) {
       throw new Error('Task not found');
     }
     return task;
   }
 
-  async update(id: string, updateTaskDto: UpdateTaskDto) {
-    const task = await this.findOne(id);
+  async update(id: string, updateTaskDto: UpdateTaskDto, user: User) {
+    const task = await this.findOne(id, user);
     return this.taskRepository.save({ ...task, ...updateTaskDto });
   }
 
-  async remove(id: string) {
-    const task = await this.findOne(id);
+  async remove(id: string, user: User) {
+    const task = await this.findOne(id, user);
     return this.taskRepository.remove(task);
   }
 }
