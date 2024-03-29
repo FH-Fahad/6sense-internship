@@ -11,9 +11,11 @@ import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './jwt-payload.interface';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class AuthService {
+  private logger = new Logger('AuthService');
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
@@ -32,11 +34,16 @@ export class AuthService {
     });
 
     try {
+      this.logger.log(`User ${username} created`);
       return this.userRepository.save(newUser);
     } catch (err) {
       if (err.code === '23505') {
         throw new Error('Username already exists');
       } else {
+        this.logger.error(
+          `User ${username} field to create account`,
+          err.message,
+        );
         throw new InternalServerErrorException('Something went wrong');
       }
     }
@@ -46,12 +53,18 @@ export class AuthService {
     const { username, password } = authCredentialsDto;
     const user = await this.userRepository.findOneBy({ username });
 
-    if (user && (await bcrypt.compare(password, user.password))) {
-      const payload: JwtPayload = { username };
-      const accessToken = this.jwtService.sign(payload);
-      return { accessToken };
-    } else {
-      throw new UnauthorizedException('Invalid credentials');
+    try {
+      if (user && (await bcrypt.compare(password, user.password))) {
+        const payload: JwtPayload = { username };
+        const accessToken = this.jwtService.sign(payload);
+        return { accessToken };
+      } else {
+        this.logger.error(`User ${username} has invalid credentials`);
+        throw new UnauthorizedException('Invalid credentials');
+      }
+    } catch (err) {
+      this.logger.error(`User ${username} failed to sign in`, err.message);
+      throw new InternalServerErrorException('Something went wrong');
     }
   }
 
@@ -62,6 +75,7 @@ export class AuthService {
   async findOne(id: string) {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
+      this.logger.error(`User with ID ${id} not found`);
       throw new Error('User not found');
     }
     return user;
@@ -70,6 +84,7 @@ export class AuthService {
   async findOneByUsername(username: string) {
     const user = await this.userRepository.findOneBy({ username });
     if (!user) {
+      this.logger.error(`User with username ${username} not found`);
       throw new Error('User not found');
     }
     return user;
@@ -77,11 +92,24 @@ export class AuthService {
 
   async update(id: string, updateUserDto: UpdateUserDto) {
     const user = await this.findOne(id);
-    return this.userRepository.save({ ...user, ...updateUserDto });
+    try {
+      this.logger.log(`User with ID ${id} updated`);
+      return this.userRepository.save({ ...user, ...updateUserDto });
+    } catch (err) {
+      this.logger.error(`User with ID ${id} failed to update`, err.message);
+      throw new InternalServerErrorException('Something went wrong');
+    }
   }
 
   async remove(id: string) {
     const user = await this.findOne(id);
-    return this.userRepository.remove(user);
+
+    try {
+      this.logger.log(`User with ID ${id} removed`);
+      return this.userRepository.remove(user);
+    } catch (err) {
+      this.logger.error(`User with ID ${id} failed to remove`, err.message);
+      throw new InternalServerErrorException('Something went wrong');
+    }
   }
 }
