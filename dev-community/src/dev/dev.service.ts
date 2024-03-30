@@ -26,7 +26,8 @@ export class DevService {
       email,
       password: hashedPassword,
       skills,
-      experience
+      experience,
+      refreshToken: ''
     });
 
     try {
@@ -49,19 +50,17 @@ export class DevService {
       throw new InternalServerErrorException(`Dev with email: ${email} not found`);
     }
 
-    const payload = { id: _id, email: dev.email };
+    const accessTokenPayload = { id: _id, email: dev.email };
+    const refreshTokenPayload = { id: _id };
 
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
-    const refreshToken2 = this.jwtService.sign(payload, { expiresIn: '7d' });
+    const accessToken = this.jwtService.sign(accessTokenPayload, { expiresIn: '1h' });
+    const refreshToken = this.jwtService.sign(refreshTokenPayload, { expiresIn: '7d' });
 
-    // await dev.refreshToken = refreshToken2;
-
-    await dev.save({ validateBeforeSave: false});
-
-    console.log(dev);
+    dev.refreshToken = refreshToken;
+    await dev.save({ validateBeforeSave: false });
 
     this.logger.log(`Refresh token generated for ${email}`);
-    return { accessToken, refreshToken2 };
+    return { accessToken, refreshToken };
   }
 
   async login(email: string, password: string) {

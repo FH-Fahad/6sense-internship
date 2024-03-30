@@ -4,20 +4,22 @@ import { DevController } from './dev.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Dev, DevSchema } from 'src/schema/dev.schema';
 import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { JwtStrategy } from './jwt-strategy';
 
 @Module({
   imports: [
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     MongooseModule.forFeature([{
       name: Dev.name,
       schema: DevSchema
     }]),
     JwtModule.register({
-      secret: "mySecretKey",
-      signOptions: { expiresIn: '1d' }
+      secret: `${process.env.JWT_SECRET}`
     })
   ],
   controllers: [DevController],
-  providers: [DevService],
-  // exports: [DevService]
+  providers: [DevService, JwtStrategy],
+  exports: [JwtStrategy, PassportModule]
 })
 export class DevModule { }
