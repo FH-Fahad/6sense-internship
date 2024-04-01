@@ -2,9 +2,10 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import Mongoose, { Model } from 'mongoose';
 import { Comment } from 'src/schema/comment.schema';
 import { Logger } from '@nestjs/common';
+import { PostCommentService } from 'src/post-comment/post-comment.service';
 import { PostComment } from 'src/schema/post-comment.schema';
 
 @Injectable()
@@ -12,10 +13,11 @@ export class CommentService {
   private logger = new Logger();
   constructor(
     @InjectModel('Comment') private readonly commentModel: Model<Comment>,
+    private postCommentService: PostCommentService,
     @InjectModel('PostComment') private readonly postCommentModel: Model<PostComment>,
   ) { }
 
-  async create(createCommentDto: CreateCommentDto, postId: string) {
+  async create(createCommentDto: CreateCommentDto, postId: Mongoose.Types.ObjectId) {
     const { content } = createCommentDto;
 
     const comment = new this.commentModel({ content });
@@ -24,8 +26,13 @@ export class CommentService {
       this.logger.log(`Creating a new comment with content: ${content}`);
       const saveComment = await comment.save();
 
-      const postComment = new this.postCommentModel({ postId, commentId: saveComment.id });
-      await postComment.save();
+      const postComment = {
+        postId,
+        commentId: saveComment._id
+      };
+
+      this.postCommentService.createPostComment(postComment);
+
       this.logger.log(`Comment for ${postId} with content: ${content} created successfully`);
       return { saveComment, postComment };
     } catch (error) {

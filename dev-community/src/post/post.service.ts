@@ -2,9 +2,10 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import Mongoose, { Model } from 'mongoose';
 import { Post } from 'src/schema/post.schema';
 import { Logger } from '@nestjs/common';
+import { DevPostService } from 'src/dev-post/dev-post.service';
 import { DevPost } from 'src/schema/dev-post.schema';
 
 @Injectable()
@@ -12,10 +13,11 @@ export class PostService {
   private logger = new Logger();
   constructor(
     @InjectModel('Post') private readonly postModel: Model<Post>,
+    private readonly devPostService: DevPostService,
     @InjectModel('DevPost') private readonly devPostModel: Model<DevPost>
   ) { }
 
-  async create(createPostDto: CreatePostDto, devId: string) {
+  async create(createPostDto: CreatePostDto, devId: Mongoose.Types.ObjectId) {
     const { title, content } = createPostDto;
 
     const post = new this.postModel({ title, content });
@@ -24,9 +26,12 @@ export class PostService {
       this.logger.log(`Creating a new post with title: ${title}`);
       const postSave = await post.save();
 
-      const devPost = new this.devPostModel({ postId: postSave._id, devId });
+      const devPost = {
+        postId: postSave._id,
+        devId
+      };
 
-      await devPost.save();
+      this.devPostService.createDevPost(devPost);
 
       return { postSave, devPost };
     } catch (error) {

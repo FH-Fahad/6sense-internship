@@ -14,7 +14,6 @@ export class CommentController {
   create(@Body() createCommentDto: CreateCommentDto,
     @Req() req) {
     const postId = req.params.postId;
-    console.log(postId);
     return this.commentService.create(createCommentDto, postId);
   }
 
