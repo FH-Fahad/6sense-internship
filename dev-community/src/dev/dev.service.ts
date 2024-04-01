@@ -39,30 +39,6 @@ export class DevService {
     }
   }
 
-  async generateAccessAndRefreshToken(dev) {
-    const { _id, email } = dev;
-
-    const user = await this.devModel
-      .findOne({ _id })
-
-    if (!user) {
-      this.logger.error(`Dev with email: ${email} not found`);
-      throw new InternalServerErrorException(`Dev with email: ${email} not found`);
-    }
-
-    const accessTokenPayload = { id: _id, email: dev.email };
-    const refreshTokenPayload = { id: _id };
-
-    const accessToken = this.jwtService.sign(accessTokenPayload, { expiresIn: '1h' });
-    const refreshToken = this.jwtService.sign(refreshTokenPayload, { expiresIn: '7d' });
-
-    dev.refreshToken = refreshToken;
-    await dev.save({ validateBeforeSave: false });
-
-    this.logger.log(`Refresh token generated for ${email}`);
-    return { accessToken, refreshToken };
-  }
-
   async login(email: string, password: string) {
     const dev = await this.devModel.findOne({ email });
 
@@ -71,18 +47,34 @@ export class DevService {
       throw new InternalServerErrorException(`Dev with email: ${email} not found`);
     }
 
-    const validPassword = await bcrypt.compare(password, dev.password);
+    const comparePassword = await bcrypt.compare(password, dev.password);
 
-    if (!validPassword) {
-      this.logger.error(`Invalid password`);
+    if (!comparePassword) {
+      this.logger.error(`Invalid password for dev with email: ${email}`);
       throw new InternalServerErrorException(`Invalid password`);
     }
-    return await this.generateAccessAndRefreshToken(dev);
+
+    try {
+      if (dev && comparePassword) {
+        const { _id } = dev;
+        const payload = { id: _id };
+        const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+        const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+        dev.refreshToken = refreshToken;
+        await dev.save({ validateBeforeSave: false });
+
+        return { _id, accessToken, refreshToken };
+      }
+    } catch (error) {
+      this.logger.error(`Error logging in dev with email: ${email}`);
+      throw new InternalServerErrorException(`Something went wrong`);
+    }
   }
 
   findAll() {
     this.logger.log(`Retrieving all users`);
-    return this.devModel.find();
+    return this.devModel.find({}, { password: 0, refreshToken: 0, __v: 0 });
   }
 
   findOne(id: string) {
@@ -93,7 +85,7 @@ export class DevService {
       throw new InternalServerErrorException(`Dev with id: ${id} not found`);
     }
     this.logger.log(`Retrieving a dev with id: ${id}`);
-    return this.devModel.findById(id);
+    return dev;
   }
 
   async update(id: string, updateDevDto: UpdateDevDto) {

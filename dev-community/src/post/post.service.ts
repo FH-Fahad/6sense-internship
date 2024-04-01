@@ -5,29 +5,40 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Post } from 'src/schema/post.schema';
 import { Logger } from '@nestjs/common';
+import { DevPost } from 'src/schema/dev-post.schema';
 
 @Injectable()
 export class PostService {
   private logger = new Logger();
   constructor(
-    @InjectModel('Post') private readonly postModel: Model<Post>
+    @InjectModel('Post') private readonly postModel: Model<Post>,
+    @InjectModel('DevPost') private readonly devPostModel: Model<DevPost>
   ) { }
 
-  create(createPostDto: CreatePostDto) {
+  async create(createPostDto: CreatePostDto, devId: string) {
     const { title, content } = createPostDto;
+
     const post = new this.postModel({ title, content });
 
     try {
       this.logger.log(`Creating a new post with title: ${title}`);
-      return post.save();
+      const postSave = await post.save();
+
+      const devPost = new this.devPostModel({ postId: postSave._id, devId });
+
+      await devPost.save();
+
+      return { postSave, devPost };
     } catch (error) {
       this.logger.error(`Error creating a new post with title: ${title}`);
       throw new InternalServerErrorException(`Something went wrong`);
     }
   }
 
-  findAll() {
-    return this.postModel.find();
+  async findAllByUserId(userId: string): Promise<Post[]> {
+    const devPosts = await this.devPostModel.find({ devId: userId }).exec();
+    const postIds = devPosts.map(devPost => devPost.postId);
+    return this.postModel.find({ _id: { $in: postIds } }).exec();
   }
 
   findOne(id: string) {

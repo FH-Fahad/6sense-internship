@@ -5,29 +5,39 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Comment } from 'src/schema/comment.schema';
 import { Logger } from '@nestjs/common';
+import { PostComment } from 'src/schema/post-comment.schema';
 
 @Injectable()
 export class CommentService {
   private logger = new Logger();
   constructor(
-    @InjectModel('Comment') private readonly commentModel: Model<Comment>
+    @InjectModel('Comment') private readonly commentModel: Model<Comment>,
+    @InjectModel('PostComment') private readonly postCommentModel: Model<PostComment>,
   ) { }
 
-  create(createCommentDto: CreateCommentDto) {
+  async create(createCommentDto: CreateCommentDto, postId: string) {
     const { content } = createCommentDto;
+
     const comment = new this.commentModel({ content });
 
     try {
       this.logger.log(`Creating a new comment with content: ${content}`);
-      return comment.save();
+      const saveComment = await comment.save();
+
+      const postComment = new this.postCommentModel({ postId, commentId: saveComment.id });
+      await postComment.save();
+      this.logger.log(`Comment for ${postId} with content: ${content} created successfully`);
+      return { saveComment, postComment };
     } catch (error) {
       this.logger.error(`Error creating a new comment with content: ${content}`);
       throw new InternalServerErrorException(`Something went wrong`);
     }
   }
 
-  findAll() {
-    return this.commentModel.find();
+  async findAllByPostId(postId: string): Promise<Comment[]> {
+    const postComments = await this.postCommentModel.find({ postId }).exec();
+    const commentIds = postComments.map(postComment => postComment.commentId);
+    return this.commentModel.find({ _id: { $in: commentIds } }).exec();
   }
 
   findOne(id: string) {

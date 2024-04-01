@@ -6,10 +6,10 @@ import { Post } from "./post.schema";
 @Schema()
 export class DevPost {
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
-    dev: Dev;
+    devId: Dev;
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Post', required: true })
-    post: Post;
+    postId: Post;
 }
 
 export const DevPostSchema = SchemaFactory.createForClass(DevPost);

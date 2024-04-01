@@ -1,22 +1,27 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req, Get, Patch, Delete, Param } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { AuthGuard } from '@nestjs/passport';
 
-@Controller('comment')
+@Controller(':postId/comment')
 @UseGuards(AuthGuard())
 export class CommentController {
-  constructor(private readonly commentService: CommentService) { }
+  constructor(private readonly commentService: CommentService,
+  ) { }
 
   @Post()
-  create(@Body() createCommentDto: CreateCommentDto) {
-    return this.commentService.create(createCommentDto);
+  create(@Body() createCommentDto: CreateCommentDto,
+    @Req() req) {
+    const postId = req.params.postId;
+    console.log(postId);
+    return this.commentService.create(createCommentDto, postId);
   }
 
-  @Get()
-  findAll() {
-    return this.commentService.findAll();
+  @Get('/all')
+  findAll(@Req() req) {
+    const postId = req.params.postId;
+    return this.commentService.findAllByPostId(postId);
   }
 
   @Get(':id')

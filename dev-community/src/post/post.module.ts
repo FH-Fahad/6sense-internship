@@ -4,6 +4,7 @@ import { PostController } from './post.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Post, PostSchema } from 'src/schema/post.schema';
 import { DevModule } from 'src/dev/dev.module';
+import { DevPost, DevPostSchema } from 'src/schema/dev-post.schema';
 
 @Module({
   imports: [
@@ -13,7 +14,14 @@ import { DevModule } from 'src/dev/dev.module';
         name: Post.name,
         schema: PostSchema
       }
-    ])],
+    ]),
+    MongooseModule.forFeature([
+      {
+        name: DevPost.name,
+        schema: DevPostSchema
+      }
+    ])
+  ],
   controllers: [PostController],
   providers: [PostService],
 })
