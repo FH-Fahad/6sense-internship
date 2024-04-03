@@ -6,26 +6,26 @@ import { CommentModule } from './comment/comment.module';
 import { PostCommentModule } from './post-comment/post-comment.module';
 import { DevPostModule } from './dev-post/dev-post.module';
 import { LikeModule } from './like/like.module';
-// import { ConfigModule, ConfigService } from '@nestjs/config';
-// import configuration from './common/config/db.config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import configuration from './common/config/db.config';
 
 @Module({
   imports: [
     DevModule, PostModule, CommentModule, MongooseModule,
-    // ConfigModule.forRoot({
-    //   isGlobal: true,
-    //   load: [configuration],
-    // }),
-    // MongooseModule.forRootAsync({
-    //   imports: [ConfigModule],
-    //   inject: [ConfigService],
-    //   useFactory: async (configService: ConfigService) => ({
-    //     uri: configService.get('MONGO_URL'),
-    //   }),
-    // }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration],
+    }),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get('MONGO_URL'),
+      }),
+    }),
 
 
-    MongooseModule.forRoot('mongodb://localhost:27017/dev-community'),
+    // MongooseModule.forRoot('mongodb://localhost:27017/dev-community'),
 
     PostCommentModule, DevPostModule, LikeModule],
   controllers: [],

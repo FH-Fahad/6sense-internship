@@ -15,7 +15,7 @@ import { JwtStrategy } from './jwt-strategy';
       schema: DevSchema
     }]),
     JwtModule.register({
-      secret: `${process.env.JWT_SECRET}`
+      secret: "mySuperSecretKey",
     })
   ],
   controllers: [DevController],
