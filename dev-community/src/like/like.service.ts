@@ -3,6 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { Like } from "src/schema/likeSchema";
 import { Logger } from "@nestjs/common";
+import { LikeStatus } from "./enum/like-status.enum";
 
 @Injectable()
 export class LikeService {
@@ -11,13 +12,20 @@ export class LikeService {
         @InjectModel('Like') private likeModel: Model<Like>
     ) { }
 
-    async likePost(createLikeDto: any, userId: string): Promise<any> {
+    async likePost(createLikeDto: any, devId: string): Promise<any> {
         const { postId, action } = createLikeDto;
 
-        const like = new this.likeModel({ postId, userId, action });
+        const existingLike = await this.likeModel.findOne({ postId, devId });
+
+        if (!existingLike && action === LikeStatus.DISLIKE) {
+            this.logger.error(`Developer with id: ${devId} didn't like the post with id: ${postId}`);
+            throw new InternalServerErrorException(`Developer didn't like the post before. Only liked post can be disliked`);
+        }
+
+        const like = new this.likeModel({ postId, devId, action });
 
         try {
-            this.logger.log(`Liking a post with id: ${postId}`);
+            this.logger.log(`${action} a post with id: ${postId}`);
             const liked = await like.save();
             return liked;
         } catch (error) {

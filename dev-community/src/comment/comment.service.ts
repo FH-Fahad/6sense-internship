@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import Mongoose, { Model } from 'mongoose';
+import Mongoose, { Model, Types } from 'mongoose';
 import { Comment } from 'src/schema/comment.schema';
 import { Logger } from '@nestjs/common';
 import { PostCommentService } from 'src/post-comment/post-comment.service';
@@ -42,9 +42,34 @@ export class CommentService {
   }
 
   async findAllByPostId(postId: string): Promise<Comment[]> {
-    const postComments = await this.postCommentModel.find({ postId }).exec();
-    const commentIds = postComments.map(postComment => postComment.commentId);
-    return this.commentModel.find({ _id: { $in: commentIds } }).exec();
+    const aggregate = [];
+    aggregate.push({
+      $match: {
+        postId: new Types.ObjectId(postId)
+      }
+    });
+    aggregate.push({
+      $lookup: {
+        from: 'comments',
+        localField: 'commentId',
+        foreignField: '_id',
+        as: 'comment'
+      }
+    });
+    aggregate.push({
+      $unwind: '$comment'
+    });
+    aggregate.push({
+      $project: {
+        _id: '$comment._id',
+        content: '$comment.content'
+      }
+    });
+    const res = await this.postCommentModel.aggregate(aggregate);
+    return res;
+    // const postComments = await this.postCommentModel.find({ postId }).exec();
+    // const commentIds = postComments.map(postComment => postComment.commentId);
+    // return this.commentModel.find({ _id: { $in: commentIds } }).exec();
   }
 
   findOne(id: string): Promise<Comment> {
@@ -77,6 +102,7 @@ export class CommentService {
       throw new InternalServerErrorException(`Comment with id: ${id} not found`);
     }
     this.logger.log(`Deleting a comment with id: ${id}`);
+    await this.postCommentModel.deleteMany({ commentId: id });
     return this.commentModel.findByIdAndDelete(id);
   }
 }

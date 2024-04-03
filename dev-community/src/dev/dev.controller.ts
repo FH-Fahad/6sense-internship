@@ -19,7 +19,7 @@ export class DevController {
     return this.devService.login(loginDevDto);
   }
 
-  @Get()
+  @Get('all')
   findAll(): Promise<Dev[]> {
     return this.devService.findAll();
   }
@@ -30,12 +30,12 @@ export class DevController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDevDto: UpdateDevDto): Promise<Dev>{
+  update(@Param('id') id: string, @Body() updateDevDto: UpdateDevDto): Promise<Dev> {
     return this.devService.update(id, updateDevDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string): Promise<Dev>{
+  remove(@Param('id') id: string): Promise<Dev> {
     return this.devService.remove(id);
   }
 }

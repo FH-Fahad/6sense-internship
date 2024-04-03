@@ -66,6 +66,7 @@ export class PostService {
   async remove(id: string) {
     const post = await this.findOne(id);
     this.logger.log(`${post.title} Removed`);
+    await this.devPostModel.deleteMany({ postId: id });
     return this.postModel.findByIdAndDelete(id);
   }
 }

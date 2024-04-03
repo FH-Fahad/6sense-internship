@@ -11,7 +11,7 @@ export class Like {
     postId: string;
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Dev' })
-    userId: string;
+    devId: string;
 }
 
 export const LikeSchema = SchemaFactory.createForClass(Like);
