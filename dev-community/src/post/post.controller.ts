@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtStrategy } from 'src/dev/jwt-strategy';
+import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 
 @Controller('post')
 @UseGuards(AuthGuard())
@@ -14,15 +15,13 @@ export class PostController {
 
   @Post()
   async create(@Body() createPostDto: CreatePostDto,
-    @Req() req) {
-    const devId = req.user.id;
+    @GetCurrentUserId() devId) {
     return this.postService.create(createPostDto, devId);
   }
 
   @Get()
-  findAll(@Req() req) {
-    const userId = req.user.id;
-    return this.postService.findAllByUserId(userId);
+  findAll(@GetCurrentUserId() devId) {
+    return this.postService.findAllByUserId(devId);
   }
 
   @Get(':id')

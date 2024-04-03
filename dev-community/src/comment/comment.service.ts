@@ -17,7 +17,7 @@ export class CommentService {
     @InjectModel('PostComment') private readonly postCommentModel: Model<PostComment>,
   ) { }
 
-  async create(createCommentDto: CreateCommentDto, postId: Mongoose.Types.ObjectId) {
+  async create(createCommentDto: CreateCommentDto, postId: Mongoose.Types.ObjectId): Promise<Comment> {
     const { content } = createCommentDto;
 
     const comment = new this.commentModel({ content });
@@ -34,7 +34,7 @@ export class CommentService {
       this.postCommentService.createPostComment(postComment);
 
       this.logger.log(`Comment for ${postId} with content: ${content} created successfully`);
-      return { saveComment, postComment };
+      return saveComment;
     } catch (error) {
       this.logger.error(`Error creating a new comment with content: ${content}`);
       throw new InternalServerErrorException(`Something went wrong`);
@@ -47,7 +47,7 @@ export class CommentService {
     return this.commentModel.find({ _id: { $in: commentIds } }).exec();
   }
 
-  findOne(id: string) {
+  findOne(id: string): Promise<Comment> {
     const comment = this.commentModel.findById(id);
 
     if (!comment) {
@@ -59,15 +59,24 @@ export class CommentService {
   }
 
 
-  async update(id: string, updateCommentDto: UpdateCommentDto) {
+  async update(id: string, updateCommentDto: UpdateCommentDto): Promise<Comment> {
     const comment = await this.findOne(id);
-    this.logger.log(`${comment.id} updated.`);
+    if (!comment) {
+      this.logger.error(`Comment with id: ${id} not found`);
+      throw new InternalServerErrorException(`Comment with id: ${id} not found`);
+    }
+
+    this.logger.log(`Updating a comment with id: ${id}`);
     return this.commentModel.findByIdAndUpdate(id, updateCommentDto, { new: true })
   }
 
-  async remove(id: string) {
+  async remove(id: string): Promise<Comment> {
     const comment = await this.findOne(id);
-    this.logger.log(`${comment.id} deleted.`);
+    if (!comment) {
+      this.logger.error(`Comment with id: ${id} not found`);
+      throw new InternalServerErrorException(`Comment with id: ${id} not found`);
+    }
+    this.logger.log(`Deleting a comment with id: ${id}`);
     return this.commentModel.findByIdAndDelete(id);
   }
 }

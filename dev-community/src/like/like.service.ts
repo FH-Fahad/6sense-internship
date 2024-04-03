@@ -11,7 +11,7 @@ export class LikeService {
         @InjectModel('Like') private likeModel: Model<Like>
     ) { }
 
-    async likePost(createLikeDto: any, userId: string) {
+    async likePost(createLikeDto: any, userId: string): Promise<any> {
         const { postId, action } = createLikeDto;
 
         const like = new this.likeModel({ postId, userId, action });

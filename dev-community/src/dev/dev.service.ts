@@ -7,6 +7,7 @@ import { Dev } from 'src/schema/dev.schema';
 import { Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { LoginDevDto } from './dto/login-dev.dto';
 
 @Injectable()
 export class DevService {
@@ -16,7 +17,7 @@ export class DevService {
     private jwtService: JwtService
   ) { }
 
-  async create(createDevDto: CreateDevDto) {
+  async create(createDevDto: CreateDevDto): Promise<Dev> {
     const { email, password, skills, experience } = createDevDto;
 
     const salt = await bcrypt.genSalt();
@@ -39,7 +40,8 @@ export class DevService {
     }
   }
 
-  async login(email: string, password: string) {
+  async login(loginDevDto: LoginDevDto) {
+    const { email, password } = loginDevDto;
     const dev = await this.devModel.findOne({ email });
 
     if (!dev) {
@@ -72,12 +74,12 @@ export class DevService {
     }
   }
 
-  findAll() {
+  findAll(): Promise<Dev[]> {
     this.logger.log(`Retrieving all users`);
     return this.devModel.find({}, { password: 0, refreshToken: 0, __v: 0 });
   }
 
-  findOne(id: string) {
+  findOne(id: string): Promise<Dev> {
     const dev = this.devModel.findById(id);
 
     if (!dev) {
@@ -88,13 +90,13 @@ export class DevService {
     return dev;
   }
 
-  async update(id: string, updateDevDto: UpdateDevDto) {
+  async update(id: string, updateDevDto: UpdateDevDto): Promise<Dev> {
     const dev = await this.findOne(id);
     this.logger.log(`${dev.email} Updating info.`);
     return this.devModel.findByIdAndUpdate(id, updateDevDto, { new: true });
   }
 
-  async remove(id: string) {
+  async remove(id: string): Promise<Dev> {
     const dev = await this.findOne(id);
     this.logger.log(`${dev.email} Removed`);
     return this.devModel.findByIdAndDelete(id);
