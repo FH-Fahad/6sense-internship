@@ -6,6 +6,7 @@ import { Dev, DevSchema } from 'src/schema/dev.schema';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt-strategy';
+import { loadEnv } from 'src/common/config/jwt-secret-loader.config';
 
 @Module({
   imports: [
@@ -14,8 +15,13 @@ import { JwtStrategy } from './jwt-strategy';
       name: Dev.name,
       schema: DevSchema
     }]),
-    JwtModule.register({
-      secret: "mySuperSecretKey",
+    JwtModule.registerAsync({
+      useFactory: async () => {
+        await loadEnv();
+        return {
+          secret: process.env.JWT_SECRET
+        }
+      }
     })
   ],
   controllers: [DevController],
