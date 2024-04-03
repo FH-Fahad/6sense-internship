@@ -1,12 +1,12 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { CreateDevDto } from './dto/create-dev.dto';
-import { UpdateDevDto } from './dto/update-dev.dto';
+import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Dev } from 'src/schema/dev.schema';
-import { Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { Dev } from './entity/dev.Schema';
+import { CreateDevDto } from './dto/create-dev.dto';
+import { UpdateDevDto } from './dto/update-dev.dto';
 import { LoginDevDto } from './dto/login-dev.dto';
 
 @Injectable()

@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { DevService } from './dev.service';
-import { DevController } from './dev.controller';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Dev, DevSchema } from 'src/schema/dev.schema';
 import { JwtModule } from '@nestjs/jwt';
+import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
+import { Dev, DevSchema } from './entity/dev.Schema';
+import { DevController } from './dev.controller';
+import { DevService } from './dev.service';
 import { JwtStrategy } from './jwt-strategy';
-import { loadEnv } from 'src/common/config/jwt-secret-loader.config';
+import { loadEnv } from '../common/config/jwt-secret-loader.config';
 
 @Module({
   imports: [

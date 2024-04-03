@@ -1,8 +1,8 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { Like } from "src/schema/likeSchema";
-import { Logger } from "@nestjs/common";
+import { Like } from "./entity/like.Schema";
 import { LikeStatus } from "./enum/like-status.enum";
 
 @Injectable()

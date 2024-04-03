@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { DevPostService } from './dev-post.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { DevPost, DevPostSchema } from 'src/schema/dev-post.schema';
+import { DevPost, DevPostSchema } from '../dev-post/entity/dev-post.Schema';
+import { DevPostService } from './dev-post.service';
 
 @Module({
   imports: [
@@ -10,4 +10,4 @@ import { DevPost, DevPostSchema } from 'src/schema/dev-post.schema';
     ])],
   providers: [DevPostService]
 })
-export class DevPostModule {}
+export class DevPostModule { }

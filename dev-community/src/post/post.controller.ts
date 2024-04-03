@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { PostService } from './post.service';
+import { AuthGuard } from '@nestjs/passport';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { AuthGuard } from '@nestjs/passport';
-import { JwtStrategy } from 'src/dev/jwt-strategy';
-import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
+import { JwtStrategy } from '../dev/jwt-strategy';
+import { PostService } from './post.service';
+import { GetCurrentUserId } from '../common/decorators/get-user-id.decorator';
 
 @Controller('post')
 @UseGuards(AuthGuard())

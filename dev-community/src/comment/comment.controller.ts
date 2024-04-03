@@ -1,9 +1,9 @@
 import { Controller, Post, Body, UseGuards, Req, Get, Patch, Delete, Param } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { Comment } from './entity/comment.Schema';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { AuthGuard } from '@nestjs/passport';
-import { Comment } from 'src/schema/comment.schema';
 
 @Controller(':postId/comment')
 @UseGuards(AuthGuard())

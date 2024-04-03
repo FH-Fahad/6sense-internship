@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import mongoose from "mongoose";
-import { Dev } from "./dev.schema";
-import { Post } from "./post.schema";
+import { Dev } from "../../dev/entity/dev.Schema";
+import { Post } from "../../post/entity/post.Schema";
 
 @Schema()
 export class DevPost {

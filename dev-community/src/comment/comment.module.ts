@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { CommentService } from './comment.service';
-import { CommentController } from './comment.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Comment, CommentSchema } from 'src/schema/comment.schema';
-import { PostComment, PostCommentSchema } from 'src/schema/post-comment.schema';
 import { PassportModule } from '@nestjs/passport';
-import { PostCommentService } from 'src/post-comment/post-comment.service';
+import { Comment, CommentSchema } from './entity/comment.Schema';
+import { PostComment, PostCommentSchema } from '../post-comment/entity/post-comment.Schema';
+import { CommentController } from './comment.controller';
+import { CommentService } from './comment.service';
+import { PostCommentService } from '../post-comment/post-comment.service';
 
 @Module({
   imports: [

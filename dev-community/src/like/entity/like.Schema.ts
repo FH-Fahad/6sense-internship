@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { LikeStatus } from "src/like/enum/like-status.enum";
 import mongoose from 'mongoose';
+import { LikeStatus } from "../enum/like-status.enum";
 
 @Schema()
 export class Like {

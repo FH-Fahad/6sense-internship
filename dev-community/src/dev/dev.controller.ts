@@ -1,9 +1,9 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { DevService } from './dev.service';
+import { Dev } from './entity/dev.Schema';
+import { LoginDevDto } from "./dto/login-dev.dto"
 import { CreateDevDto } from './dto/create-dev.dto';
 import { UpdateDevDto } from './dto/update-dev.dto';
-import { Dev } from 'src/schema/dev.schema';
-import { LoginDevDto } from "./dto/login-dev.dto"
+import { DevService } from './dev.service';
 
 @Controller('dev')
 export class DevController {

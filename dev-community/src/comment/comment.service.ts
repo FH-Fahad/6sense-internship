@@ -1,12 +1,12 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { UpdateCommentDto } from './dto/update-comment.dto';
+import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import Mongoose, { Model, Types } from 'mongoose';
-import { Comment } from 'src/schema/comment.schema';
-import { Logger } from '@nestjs/common';
-import { PostCommentService } from 'src/post-comment/post-comment.service';
-import { PostComment } from 'src/schema/post-comment.schema';
+import { Comment } from './entity/comment.Schema';
+import { CreateCommentDto } from './dto/create-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
+import { PostComment } from '../post-comment/entity/post-comment.Schema';
+import { PostCommentService } from '../post-comment/post-comment.service';
 
 @Injectable()
 export class CommentService {

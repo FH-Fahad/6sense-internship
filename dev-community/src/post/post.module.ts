@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { PostService } from './post.service';
 import { PostController } from './post.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Post, PostSchema } from 'src/schema/post.schema';
-import { DevModule } from 'src/dev/dev.module';
-import { DevPost, DevPostSchema } from 'src/schema/dev-post.schema';
-import { DevPostService } from 'src/dev-post/dev-post.service';
+import { Post, PostSchema } from './entity/post.Schema';
+import { DevModule } from '../dev/dev.module';
+import { DevPost, DevPostSchema } from '../dev-post/entity/dev-post.Schema';
+import { DevPostService } from '../dev-post/dev-post.service';
 
 @Module({
   imports: [

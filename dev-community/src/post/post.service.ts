@@ -3,10 +3,10 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import Mongoose, { Model } from 'mongoose';
-import { Post } from 'src/schema/post.schema';
+import { Post } from '../post/entity/post.Schema';
 import { Logger } from '@nestjs/common';
-import { DevPostService } from 'src/dev-post/dev-post.service';
-import { DevPost } from 'src/schema/dev-post.schema';
+import { DevPostService } from '../dev-post/dev-post.service';
+import { DevPost } from '../dev-post/entity/dev-post.Schema';
 
 @Injectable()
 export class PostService {

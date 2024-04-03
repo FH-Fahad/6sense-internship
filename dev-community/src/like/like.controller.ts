@@ -1,7 +1,7 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
-import { LikeService } from "./like.service";
 import { AuthGuard } from "@nestjs/passport";
 import { CreateLikeDto } from "./dto/create-like.dto";
+import { LikeService } from "./like.service";
 import { GetCurrentUserId } from "../common/decorators/get-user-id.decorator";
 
 @Controller('like')
