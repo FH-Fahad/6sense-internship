@@ -8,6 +8,7 @@ import { Dev } from './entity/dev.Schema';
 import { CreateDevDto } from './dto/create-dev.dto';
 import { UpdateDevDto } from './dto/update-dev.dto';
 import { LoginDevDto } from './dto/login-dev.dto';
+import Mongoose from 'mongoose';
 
 @Injectable()
 export class DevService {
@@ -79,7 +80,7 @@ export class DevService {
     return this.devModel.find({}, { password: 0, refreshToken: 0, __v: 0 });
   }
 
-  findOne(id: string): Promise<Dev> {
+  findOne(id: Mongoose.Types.ObjectId): Promise<Dev> {
     const dev = this.devModel.findById(id);
 
     if (!dev) {
@@ -90,13 +91,13 @@ export class DevService {
     return dev;
   }
 
-  async update(id: string, updateDevDto: UpdateDevDto): Promise<Dev> {
+  async update(id: Mongoose.Types.ObjectId, updateDevDto: UpdateDevDto): Promise<Dev> {
     const dev = await this.findOne(id);
     this.logger.log(`${dev.email} Updating info.`);
     return this.devModel.findByIdAndUpdate(id, updateDevDto, { new: true });
   }
 
-  async remove(id: string): Promise<Dev> {
+  async remove(id: Mongoose.Types.ObjectId): Promise<Dev> {
     const dev = await this.findOne(id);
     this.logger.log(`${dev.email} Removed`);
     return this.devModel.findByIdAndDelete(id);

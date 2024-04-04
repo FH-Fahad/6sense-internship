@@ -1,3 +1,5 @@
+import Mongoose from 'mongoose';
+
 export interface JwtPayload {
-    id: string;
+    id: Mongoose.Types.ObjectId;
 }

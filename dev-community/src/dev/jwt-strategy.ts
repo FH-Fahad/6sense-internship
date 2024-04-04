@@ -6,7 +6,6 @@ import { JwtPayload } from "./jwt-payload.interface";
 import { Logger } from "@nestjs/common";
 import { loadEnv } from '../common/config/jwt-secret-loader.config';
 
-
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
     private logger = new Logger();

@@ -1,9 +1,10 @@
 import { IsEnum, IsNotEmpty } from "class-validator";
 import { LikeStatus } from "../enum/like-status.enum";
+import Mongoose from 'mongoose';
 
 export class CreateLikeDto {
     @IsNotEmpty()
-    postId: string;
+    postId: Mongoose.Types.ObjectId;
 
     @IsNotEmpty()
     @IsEnum(LikeStatus)

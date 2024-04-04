@@ -24,9 +24,6 @@ import configuration from './common/config/db.config';
       }),
     }),
 
-
-    // MongooseModule.forRoot('mongodb://localhost:27017/dev-community'),
-
     PostCommentModule, DevPostModule, LikeModule],
   controllers: [],
   providers: [],

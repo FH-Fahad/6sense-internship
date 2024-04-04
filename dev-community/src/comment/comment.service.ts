@@ -41,7 +41,7 @@ export class CommentService {
     }
   }
 
-  async findAllByPostId(postId: string): Promise<Comment[]> {
+  async findAllByPostId(postId: Mongoose.Types.ObjectId): Promise<Comment[]> {
     const aggregate = [];
     aggregate.push({
       $match: {
@@ -72,7 +72,7 @@ export class CommentService {
     // return this.commentModel.find({ _id: { $in: commentIds } }).exec();
   }
 
-  findOne(id: string): Promise<Comment> {
+  findOne(id: Mongoose.Types.ObjectId): Promise<Comment> {
     const comment = this.commentModel.findById(id);
 
     if (!comment) {
@@ -84,7 +84,7 @@ export class CommentService {
   }
 
 
-  async update(id: string, updateCommentDto: UpdateCommentDto): Promise<Comment> {
+  async update(id: Mongoose.Types.ObjectId, updateCommentDto: UpdateCommentDto): Promise<Comment> {
     const comment = await this.findOne(id);
     if (!comment) {
       this.logger.error(`Comment with id: ${id} not found`);
@@ -95,14 +95,14 @@ export class CommentService {
     return this.commentModel.findByIdAndUpdate(id, updateCommentDto, { new: true })
   }
 
-  async remove(id: string): Promise<Comment> {
+  async remove(id: Mongoose.Types.ObjectId): Promise<Comment> {
     const comment = await this.findOne(id);
     if (!comment) {
       this.logger.error(`Comment with id: ${id} not found`);
       throw new InternalServerErrorException(`Comment with id: ${id} not found`);
     }
     this.logger.log(`Deleting a comment with id: ${id}`);
-    await this.postCommentModel.deleteMany({ commentId: id });
+    await this.postCommentModel.deleteOne({ commentId: id });
     return this.commentModel.findByIdAndDelete(id);
   }
 }
