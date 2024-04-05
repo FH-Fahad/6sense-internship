@@ -1,5 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import Mongoose, { Model, Types } from 'mongoose';
 import { Comment } from './entity/comment.Schema';
@@ -10,20 +9,20 @@ import { PostCommentService } from '../post-comment/post-comment.service';
 
 @Injectable()
 export class CommentService {
-  private logger = new Logger();
   constructor(
     @InjectModel('Comment') private readonly commentModel: Model<Comment>,
     private postCommentService: PostCommentService,
     @InjectModel('PostComment') private readonly postCommentModel: Model<PostComment>,
   ) { }
 
+
+  // Create a new comment
   async create(createCommentDto: CreateCommentDto, postId: Mongoose.Types.ObjectId): Promise<Comment> {
     const { content } = createCommentDto;
 
     const comment = new this.commentModel({ content });
 
     try {
-      this.logger.log(`Creating a new comment with content: ${content}`);
       const saveComment = await comment.save();
 
       const postComment = {
@@ -31,16 +30,14 @@ export class CommentService {
         commentId: saveComment._id
       };
 
-      this.postCommentService.createPostComment(postComment);
-
-      this.logger.log(`Comment for ${postId} with content: ${content} created successfully`);
+      await this.postCommentService.createPostComment(postComment);
       return saveComment;
     } catch (error) {
-      this.logger.error(`Error creating a new comment with content: ${content}`);
       throw new InternalServerErrorException(`Something went wrong`);
     }
   }
 
+  // Find all comments by post ID
   async findAllByPostId(postId: Mongoose.Types.ObjectId): Promise<Comment[]> {
     const aggregate = [];
     aggregate.push({
@@ -56,13 +53,16 @@ export class CommentService {
         as: 'comment'
       }
     });
+    //used $unwind to flatten the array, else it would be an array of arrays
     aggregate.push({
       $unwind: '$comment'
     });
     aggregate.push({
       $project: {
         _id: '$comment._id',
-        content: '$comment.content'
+        content: '$comment.content',
+        createdAt: '$comment.createdAt',
+        updatedAt: '$comment.updatedAt'
       }
     });
     const res = await this.postCommentModel.aggregate(aggregate);
@@ -72,37 +72,53 @@ export class CommentService {
     // return this.commentModel.find({ _id: { $in: commentIds } }).exec();
   }
 
-  findOne(id: Mongoose.Types.ObjectId): Promise<Comment> {
-    const comment = this.commentModel.findById(id);
+  // Find one comment by comment ID
+  async findOne(commentId: Mongoose.Types.ObjectId): Promise<Comment | null> {
+    if (!Mongoose.Types.ObjectId.isValid(commentId)) {
+      throw new BadRequestException('Invalid comment ID');
+    }
+
+    const comment = await this.commentModel.findById(commentId);
 
     if (!comment) {
-      this.logger.error(`Comment with id: ${id} not found`);
-      throw new InternalServerErrorException(`Comment with id: ${id} not found`);
+      throw new NotFoundException(`Comment with id: ${commentId} not found`);
     }
-    this.logger.log(`Retrieving a comment with id: ${id}`);
-    return this.commentModel.findById(id);
+
+    return comment;
   }
 
-
-  async update(id: Mongoose.Types.ObjectId, updateCommentDto: UpdateCommentDto): Promise<Comment> {
-    const comment = await this.findOne(id);
-    if (!comment) {
-      this.logger.error(`Comment with id: ${id} not found`);
-      throw new InternalServerErrorException(`Comment with id: ${id} not found`);
+  // Update a comment
+  async update(commentId: Mongoose.Types.ObjectId, updateCommentDto: UpdateCommentDto): Promise<Comment> {
+    if (!Mongoose.Types.ObjectId.isValid(commentId)) {
+      throw new BadRequestException('Invalid comment ID');
     }
 
-    this.logger.log(`Updating a comment with id: ${id}`);
-    return this.commentModel.findByIdAndUpdate(id, updateCommentDto, { new: true })
+    const comment = await this.findOne(commentId);
+
+    if (!comment) {
+      throw new BadRequestException(`Comment with id: ${commentId} not found`);
+    }
+
+    return await this.commentModel.findByIdAndUpdate(commentId, updateCommentDto, { new: true })
   }
 
-  async remove(id: Mongoose.Types.ObjectId): Promise<Comment> {
-    const comment = await this.findOne(id);
-    if (!comment) {
-      this.logger.error(`Comment with id: ${id} not found`);
-      throw new InternalServerErrorException(`Comment with id: ${id} not found`);
+  // Remove a comment
+  async remove(commentId: Mongoose.Types.ObjectId): Promise<Comment> {
+    if (!Mongoose.Types.ObjectId.isValid(commentId)) {
+      throw new BadRequestException('Invalid comment ID');
     }
-    this.logger.log(`Deleting a comment with id: ${id}`);
-    await this.postCommentModel.deleteOne({ commentId: id });
-    return this.commentModel.findByIdAndDelete(id);
+
+    const comment = await this.findOne(commentId);
+
+    if (!comment) {
+      throw new NotFoundException(`Comment with id: ${commentId} not found`);
+    }
+
+    try {
+      await this.postCommentModel.deleteOne({ commentId });
+      return await this.commentModel.findByIdAndDelete(commentId);
+    } catch (error) {
+      throw new InternalServerErrorException(`Something went wrong`);
+    }
   }
 }

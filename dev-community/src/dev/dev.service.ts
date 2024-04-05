@@ -1,5 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
@@ -12,48 +11,42 @@ import Mongoose from 'mongoose';
 
 @Injectable()
 export class DevService {
-  private logger = new Logger();
   constructor(
     @InjectModel('Dev') private readonly devModel: Model<Dev>,
     private jwtService: JwtService
   ) { }
 
+  // Create a new dev
   async create(createDevDto: CreateDevDto): Promise<Dev> {
-    const { email, password, skills, experience } = createDevDto;
-
     const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(createDevDto.password, salt);
 
     const dev = new this.devModel({
-      email,
+      email: createDevDto.email,
       password: hashedPassword,
-      skills,
-      experience,
+      skills: createDevDto.skills,
+      experience: createDevDto.experience,
       refreshToken: ''
     });
 
     try {
-      this.logger.log(`Creating a new dev with email: ${email}`);
       return await dev.save();
     } catch (error) {
-      this.logger.error(`Error creating a new dev with email: ${email}`);
       throw new InternalServerErrorException(`Something went wrong`);
     }
   }
 
+  // Login a dev
   async login(loginDevDto: LoginDevDto) {
-    const { email, password } = loginDevDto;
-    const dev = await this.devModel.findOne({ email });
+    const dev = await this.devModel.findOne({ email: loginDevDto.email });
 
     if (!dev) {
-      this.logger.error(`Dev with email: ${email} not found`);
-      throw new InternalServerErrorException(`Dev with email: ${email} not found`);
+      throw new BadRequestException(`Dev with email: ${loginDevDto.email} not found`);
     }
 
-    const comparePassword = await bcrypt.compare(password, dev.password);
+    const comparePassword = await bcrypt.compare(loginDevDto.password, dev.password);
 
     if (!comparePassword) {
-      this.logger.error(`Invalid password for dev with email: ${email}`);
       throw new InternalServerErrorException(`Invalid password`);
     }
 
@@ -70,36 +63,45 @@ export class DevService {
         return { _id, accessToken, refreshToken };
       }
     } catch (error) {
-      this.logger.error(`Error logging in dev with email: ${email}`);
       throw new InternalServerErrorException(`Something went wrong`);
     }
   }
 
+  // Return all devs info
   findAll(): Promise<Dev[]> {
-    this.logger.log(`Retrieving all users`);
     return this.devModel.find({}, { password: 0, refreshToken: 0, __v: 0 });
   }
 
-  findOne(id: Mongoose.Types.ObjectId): Promise<Dev> {
-    const dev = this.devModel.findById(id);
+  // Find a dev by id
+  findOne(devId: Mongoose.Types.ObjectId): Promise<Dev> {
+    const dev = this.devModel.findById(devId);
 
     if (!dev) {
-      this.logger.error(`Dev with id: ${id} not found`);
-      throw new InternalServerErrorException(`Dev with id: ${id} not found`);
+      throw new BadRequestException(`Dev with id: ${devId} not found`);
     }
-    this.logger.log(`Retrieving a dev with id: ${id}`);
+
     return dev;
   }
 
-  async update(id: Mongoose.Types.ObjectId, updateDevDto: UpdateDevDto): Promise<Dev> {
-    const dev = await this.findOne(id);
-    this.logger.log(`${dev.email} Updating info.`);
-    return this.devModel.findByIdAndUpdate(id, updateDevDto, { new: true });
+  // Update a dev info
+  async update(devId: Mongoose.Types.ObjectId, updateDevDto: UpdateDevDto): Promise<Dev> {
+    await this.findOne(devId);
+
+    try {
+      return this.devModel.findByIdAndUpdate(devId, updateDevDto, { new: true });
+    } catch (error) {
+      throw new InternalServerErrorException(`Something went wrong`);
+    }
   }
 
-  async remove(id: Mongoose.Types.ObjectId): Promise<Dev> {
-    const dev = await this.findOne(id);
-    this.logger.log(`${dev.email} Removed`);
-    return this.devModel.findByIdAndDelete(id);
+  // Remove a dev
+  async remove(devId: Mongoose.Types.ObjectId): Promise<Dev> {
+    await this.findOne(devId);
+
+    try {
+      return this.devModel.findByIdAndDelete(devId);
+    } catch (error) {
+      throw new InternalServerErrorException(`Something went wrong`);
+    }
   }
 }

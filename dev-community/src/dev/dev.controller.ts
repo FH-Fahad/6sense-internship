@@ -25,18 +25,18 @@ export class DevController {
     return this.devService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: Mongoose.Types.ObjectId): Promise<Dev> {
-    return this.devService.findOne(id);
+  @Get(':devId')
+  findOne(@Param('devId') devId: Mongoose.Types.ObjectId): Promise<Dev> {
+    return this.devService.findOne(devId);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: Mongoose.Types.ObjectId, @Body() updateDevDto: UpdateDevDto): Promise<Dev> {
-    return this.devService.update(id, updateDevDto);
+  @Patch(':devId')
+  update(@Param('devId') devId: Mongoose.Types.ObjectId, @Body() updateDevDto: UpdateDevDto): Promise<Dev> {
+    return this.devService.update(devId, updateDevDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: Mongoose.Types.ObjectId): Promise<Dev> {
-    return this.devService.remove(id);
+  @Delete(':devId')
+  remove(@Param('devId') devId: Mongoose.Types.ObjectId): Promise<Dev> {
+    return this.devService.remove(devId);
   }
 }

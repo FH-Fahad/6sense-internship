@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import { Comment } from "../../comment/entity/comment.Schema";
 import { Post } from "../../post/entity/post.Schema";
 
-@Schema()
+@Schema({ timestamps: true})
 export class PostComment {
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Post', required: true })
     postId: Post;

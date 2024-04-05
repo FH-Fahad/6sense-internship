@@ -7,6 +7,7 @@ import { PostCommentModule } from './post-comment/post-comment.module';
 import { DevPostModule } from './dev-post/dev-post.module';
 import { LikeModule } from './like/like.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { DynamoModule } from './dynamo/dynamo.module';
 import configuration from './common/config/db.config';
 
 @Module({
@@ -24,7 +25,7 @@ import configuration from './common/config/db.config';
       }),
     }),
 
-    PostCommentModule, DevPostModule, LikeModule],
+    PostCommentModule, DevPostModule, LikeModule, DynamoModule],
   controllers: [],
   providers: [],
 })

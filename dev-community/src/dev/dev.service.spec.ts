@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DevService } from './dev.service';
-// import { InternalServerErrorException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 
 const mockDevService = {
     create: jest.fn((dev) => ({ ...dev, id: '660d2eff898f6d8e0c76328d' })),
@@ -27,7 +27,7 @@ describe('DevService', () => {
                 DevService,
                 {
                     provide: DevService,
-                    useFactory: () => mockDevService
+                    useValue: mockDevService,
                 },
             ],
         }).compile();
@@ -35,16 +35,17 @@ describe('DevService', () => {
         devService = module.get<DevService>(DevService);
     });
 
-    it('should create a new dev', async () => {
-        expect(mockDevService.create).not.toHaveBeenCalled();
+    describe('create a dev', () => {
 
-        const dev = await devService.create(mockDev);
-        expect(dev).toEqual(mockDevResponse);
+        it('should create a new dev', async () => {
+            expect(mockDevService.create).not.toHaveBeenCalled();
+            jest.spyOn(bcrypt, 'genSalt').mockResolvedValue('salt');
+            jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedPassword');
+            //TODO: mock salt and hashedPassword
+            const dev = await devService.create(mockDev);
+            expect(dev).toEqual(mockDevResponse);
 
-        expect(mockDevService.create).toHaveBeenCalled();
+            expect(mockDevService.create).toHaveBeenCalled();
+        });
     });
-
-    // it('should throw an error if something goes wrong during creation', async () => {
-    //     await expect(devService.create(mockDev)).rejects.toThrow(InternalServerErrorException);
-    // });
 });

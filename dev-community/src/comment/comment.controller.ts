@@ -7,35 +7,35 @@ import { UpdateCommentDto } from './dto/update-comment.dto';
 import { GetCurrentPostId } from 'src/common/decorators/get-user-id.decorator';
 import Mongoose from 'mongoose';
 
-@Controller(':postId/comment')
+@Controller('/comments')
 @UseGuards(AuthGuard())
 export class CommentController {
   constructor(private readonly commentService: CommentService,
   ) { }
 
-  @Post()
+  @Post('/:postId')
   create(@Body() createCommentDto: CreateCommentDto,
     @GetCurrentPostId() postId: Mongoose.Types.ObjectId): Promise<Comment> {
     return this.commentService.create(createCommentDto, postId);
   }
 
-  @Get('/all')
+  @Get('/all/:postId')
   findAll(@GetCurrentPostId() postId: Mongoose.Types.ObjectId): Promise<Comment[]> {
     return this.commentService.findAllByPostId(postId);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: Mongoose.Types.ObjectId): Promise<Comment> {
-    return this.commentService.findOne(id);
+  @Get(':commentId')
+  findOne(@Param('commentId') commentId: Mongoose.Types.ObjectId): Promise<Comment> {
+    return this.commentService.findOne(commentId);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: Mongoose.Types.ObjectId, @Body() updateCommentDto: UpdateCommentDto): Promise<Comment> {
-    return this.commentService.update(id, updateCommentDto);
+  @Patch(':commentId')
+  update(@Param('commentId') commentId: Mongoose.Types.ObjectId, @Body() updateCommentDto: UpdateCommentDto): Promise<Comment> {
+    return this.commentService.update(commentId, updateCommentDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: Mongoose.Types.ObjectId): Promise<Comment> {
-    return this.commentService.remove(id);
+  @Delete(':commentId')
+  remove(@Param('commentId') commentId: Mongoose.Types.ObjectId): Promise<Comment> {
+    return this.commentService.remove(commentId);
   }
 }

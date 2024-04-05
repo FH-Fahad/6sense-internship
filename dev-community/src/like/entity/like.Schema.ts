@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import mongoose from 'mongoose';
 import { LikeStatus } from "../enum/like-status.enum";
 
-@Schema()
+@Schema({ timestamps: true})
 export class Like {
     @Prop()
     action: LikeStatus;

@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import { Dev } from "../../dev/entity/dev.Schema";
 import { Post } from "../../post/entity/post.Schema";
 
-@Schema()
+@Schema({ timestamps: true})
 export class DevPost {
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
     devId: Dev;
