@@ -15,6 +15,7 @@ export class PostService {
     @InjectModel('DevPost') private readonly devPostModel: Model<DevPost>
   ) { }
 
+  // Creating a post
   async create(createPostDto: CreatePostDto, devId: Mongoose.Types.ObjectId): Promise<Post> {
     const post = new this.postModel({
       title: createPostDto.title,
@@ -37,12 +38,14 @@ export class PostService {
     }
   }
 
-  async findAllByDevId(devId: Mongoose.Types.ObjectId): Promise<Post[]> {
+  // Get all post by dev Id
+  async findAllPostByDevId(devId: Mongoose.Types.ObjectId): Promise<Post[]> {
     const devPosts = await this.devPostModel.find({ devId: devId }).exec();
     const postIds = devPosts.map(devPost => devPost.postId);
     return this.postModel.find({ _id: { $in: postIds } }).exec();
   }
 
+  // Get a post
   findOne(id: Mongoose.Types.ObjectId) {
     const post = this.postModel.findById(id);
 
@@ -52,11 +55,13 @@ export class PostService {
     return this.postModel.findById(id);
   }
 
+  // Update a post
   async update(id: Mongoose.Types.ObjectId, updatePostDto: UpdatePostDto) {
     await this.findOne(id);
     return this.postModel.findByIdAndUpdate(id, updatePostDto, { new: true });
   }
 
+  // Delete a post
   async remove(id: Mongoose.Types.ObjectId) {
     await this.findOne(id);
     await this.devPostModel.deleteOne({ postId: id });

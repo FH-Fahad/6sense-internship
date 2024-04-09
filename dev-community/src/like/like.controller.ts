@@ -10,6 +10,7 @@ import Mongoose from 'mongoose';
 export class LikeController {
     constructor(private likeService: LikeService) { }
 
+    // Liking or Disliking a post
     @Post('post')
     async likePost(@Body() createLikeDto: CreateLikeDto,
         @GetCurrentDevId() devId: Mongoose.Types.ObjectId): Promise<any> {

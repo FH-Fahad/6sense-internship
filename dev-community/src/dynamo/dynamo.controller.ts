@@ -13,8 +13,8 @@ export class DynamoController {
     }
 
     @Public()
-    @Get()
-    findAll() {
-        return this.dynamoService.findAll();
+    @Get('/books')
+    findAllBooks() {
+        return this.dynamoService.findAllBooks();
     }
 }

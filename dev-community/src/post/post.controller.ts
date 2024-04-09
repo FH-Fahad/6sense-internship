@@ -14,27 +14,32 @@ export class PostController {
     private jwtStrategy: JwtStrategy
   ) { }
 
+  // Creating a post
   @Post()
   async create(@Body() createPostDto: CreatePostDto,
     @GetCurrentDevId() devId: Mongoose.Types.ObjectId) {
     return this.postService.create(createPostDto, devId);
   }
 
+  // Get all post by dev Id
   @Get()
-  findAll(@GetCurrentDevId() devId: Mongoose.Types.ObjectId) {
-    return this.postService.findAllByDevId(devId);
+  findAllPostByDevId(@GetCurrentDevId() devId: Mongoose.Types.ObjectId) {
+    return this.postService.findAllPostByDevId(devId);
   }
 
+  // Get a post
   @Get(':id')
   findOne(@Param('id') id: Mongoose.Types.ObjectId) {
     return this.postService.findOne(id);
   }
 
+  // Update a post
   @Patch(':id')
   update(@Param('id') id: Mongoose.Types.ObjectId, @Body() updatePostDto: UpdatePostDto) {
     return this.postService.update(id, updatePostDto);
   }
 
+  // Delete a post
   @Delete(':id')
   remove(@Param('id') id: Mongoose.Types.ObjectId) {
     return this.postService.remove(id);

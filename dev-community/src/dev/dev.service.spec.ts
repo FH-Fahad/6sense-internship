@@ -41,7 +41,7 @@ describe('DevService', () => {
             expect(mockDevService.create).not.toHaveBeenCalled();
             jest.spyOn(bcrypt, 'genSalt').mockResolvedValue('salt');
             jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedPassword');
-            //TODO: mock salt and hashedPassword
+
             const dev = await devService.create(mockDev);
             expect(dev).toEqual(mockDevResponse);
 
