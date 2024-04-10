@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { dynamoDBClient } from './dynamodb-client';
 import * as AWS from 'aws-sdk';
+import { BookSchema } from './entity/book.schema';
+import { AuthorSchema } from './entity/author.schema';
+import { CreateBookDto } from './dto/create-book.dto';
+import { CreateAuthorDto } from './dto/create-author.dto';
+import { dynamoDBClient } from './config/dynamodb-client';
+import { BookAuthorsSchema } from './entity/book-author.schema';
+import { CreateBookAuthorDto } from './dto/create-book-author.dto';
+import { AWS_REGION, DYNAMODB_ENDPOINT } from './config/config'
 
 @Injectable()
 export class DynamoService {
@@ -8,69 +15,163 @@ export class DynamoService {
 
     constructor() {
         this.dynamodb = new AWS.DynamoDB({
-            region: 'local',
-            endpoint: 'http://localhost:8000',
+            region: AWS_REGION,
+            endpoint: DYNAMODB_ENDPOINT,
         });
     }
 
-    async createTable(tableName: string): Promise<void> {
-        const book: AWS.DynamoDB.CreateTableInput = {
-            TableName: tableName,
-            AttributeDefinitions: [
-                {
-                    AttributeName: 'id',
-                    AttributeType: 'N',
-                },
-                {
-                    AttributeName: 'bookName',
-                    AttributeType: 'S',
-                }
-            ],
-            KeySchema: [
-                {
-                    AttributeName: 'id',
-                    KeyType: 'HASH', // Partition key
-                },
-                {
-                    AttributeName: 'bookName',
-                    KeyType: 'RANGE', // Sort key
-                }
-            ],
-            ProvisionedThroughput: {
-                ReadCapacityUnits: 5, // Adjust according to your needs
-                WriteCapacityUnits: 5, // Adjust according to your needs
-            },
-        };
-
+    // Create tables
+    async createTables(): Promise<void> {
         try {
-            await this.dynamodb.createTable(book).promise();
-            console.log(`Table '${tableName}' created successfully.`);
+            await this.deleteTableIfExists(BookSchema.TableName);
+            await this.deleteTableIfExists(AuthorSchema.TableName);
+            await this.deleteTableIfExists(BookAuthorsSchema.TableName);
+
+            await this.createTable(BookSchema);
+            await this.createTable(AuthorSchema);
+            await this.createTable(BookAuthorsSchema);
         } catch (error) {
-            console.error(`Error creating table '${tableName}':`, error);
+            console.error('Error creating tables:', error);
             throw error;
         }
     }
 
-    async create() {
-        await this.createTable('Books');
-        const book = await dynamoDBClient().put({
-            TableName: 'Books',
-            Item: {
-                id: 123,
-                bookName: 'Book 123',
-            },
-        }).promise();
-
-        return book;
+    // Create table
+    async createTable(params: AWS.DynamoDB.CreateTableInput): Promise<void> {
+        try {
+            await this.dynamodb.createTable(params).promise();
+        } catch (error) {
+            console.error('Error creating table:', error);
+            throw error;
+        }
     }
 
-    async findAllBooks() {
-        const results = await dynamoDBClient()
-            .scan({
-                TableName: 'Books',
-            })
-            .promise();
+    // Delete table if exists
+    async deleteTableIfExists(tableName: string): Promise<void> {
+        try {
+            await this.dynamodb.deleteTable({ TableName: tableName }).promise();
+            console.log(`Table '${tableName}' deleted successfully.`);
+        } catch (error) {
+            if (error.code !== 'ResourceNotFoundException') {
+                console.error('Error deleting table:', error);
+                throw error;
+            }
+        }
+    }
 
-        return results.Items;
+    // Create a book
+    async createBook(createBookDto: CreateBookDto): Promise<CreateBookDto | { message: string }> {
+        try {
+            await dynamoDBClient().put({
+                TableName: BookSchema.TableName,
+                Item: createBookDto,
+            }).promise();
+
+            return createBookDto;
+        } catch (error) {
+            if (error.message.startsWith('Book with id')) {
+                return {
+                    message: error.message
+                }
+            } else {
+                return {
+                    message: 'Error creating book'
+                };
+            }
+        }
+    }
+
+    // Find all books
+    async findAllBooks(): Promise<AWS.DynamoDB.DocumentClient.ScanOutput> {
+        try {
+            const books = await dynamoDBClient().scan({
+                TableName: BookSchema.TableName,
+            }).promise();
+
+            return books;
+        } catch (error) {
+            console.error('Error fetching books:', error);
+            throw error;
+        }
+    }
+
+    // Create an author
+    async createAuthor(createAuthorDto: CreateAuthorDto): Promise<CreateAuthorDto> {
+        try {
+            await dynamoDBClient().put({
+                TableName: AuthorSchema.TableName,
+                Item: createAuthorDto,
+            }).promise();
+
+            return createAuthorDto;
+        } catch (error) {
+            console.error('Error creating author:', error);
+            throw error;
+        }
+    }
+
+    // Find all authors
+    async findAllAuthors(): Promise<AWS.DynamoDB.DocumentClient.ScanOutput> {
+        try {
+            const authors = await dynamoDBClient().scan({
+                TableName: AuthorSchema.TableName,
+            }).promise();
+
+            return authors;
+        } catch (error) {
+            console.error('Error fetching authors:', error);
+            throw error;
+        }
+    }
+
+    // Create a book author
+    async createBookAuthor(createBookAuthorDto: CreateBookAuthorDto): Promise<CreateBookAuthorDto> {
+        try {
+            await dynamoDBClient().put({
+                TableName: BookAuthorsSchema.TableName,
+                Item: createBookAuthorDto,
+            }).promise();
+
+            return createBookAuthorDto;
+        } catch (error) {
+            console.error('Error creating book author:', error);
+            throw error;
+        }
+    }
+
+    // Find all books by an author
+    async findBooksByAuthorId(authorId: number) {
+        //TODO: Implement find books by authorId
+        try {
+            const bookAuthorParams = {
+                TableName: BookAuthorsSchema.TableName,
+                FilterExpression: 'authorId = :authorId',
+                ExpressionAttributeValues: {
+                    ':authorId': authorId,
+                }
+            };
+
+            const bookAuthorResult = await dynamoDBClient().scan(bookAuthorParams).promise();
+
+            const bookIds = bookAuthorResult.Items.map(item => item.bookId);
+
+            const books = [];
+
+            for (const bookId of bookIds) {
+                const bookParams = {
+                    TableName: BookSchema.TableName,
+                    Key: {
+                        'bookId': bookId,
+                    }
+                };
+
+                const bookResult = await dynamoDBClient().get(bookParams).promise();
+                books.push(bookResult.Item);
+            }
+            return books;
+        } catch (error) {
+            console.error('Error fetching books by author:', error);
+            throw error;
+        }
     }
 }

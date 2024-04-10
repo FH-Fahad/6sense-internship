@@ -1,5 +1,6 @@
 import * as AWS from 'aws-sdk';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { AWS_REGION, DYNAMODB_ENDPOINT } from './config';
 
 AWS.config.update({
     region: 'us-east-1',
@@ -9,7 +10,7 @@ AWS.config.update({
 
 export const dynamoDBClient = (): DocumentClient => {
     return new AWS.DynamoDB.DocumentClient({
-        region: 'local',
-        endpoint: 'http://localhost:8000',
+        region: AWS_REGION,
+        endpoint: DYNAMODB_ENDPOINT,
     });
 };
