@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import * as AWS from 'aws-sdk';
 import { BookSchema } from './entity/book.schema';
 import { AuthorSchema } from './entity/author.schema';
-import { CreateBookDto } from './dto/create-book.dto';
+// import { CreateBookDto } from './dto/create-book.dto';
 import { CreateAuthorDto } from './dto/create-author.dto';
 import { dynamoDBClient } from './config/dynamodb-client';
 import { BookAuthorsSchema } from './entity/book-author.schema';
 import { CreateBookAuthorDto } from './dto/create-book-author.dto';
 import { AWS_REGION, DYNAMODB_ENDPOINT } from './config/config'
+import { createBookFaker } from './faker/create-book.faker'
 
 @Injectable()
 export class DynamoService {
@@ -60,14 +61,9 @@ export class DynamoService {
     }
 
     // Create a book
-    async createBook(createBookDto: CreateBookDto): Promise<CreateBookDto | { message: string }> {
+    async createBook(): Promise<any> {
         try {
-            await dynamoDBClient().put({
-                TableName: BookSchema.TableName,
-                Item: createBookDto,
-            }).promise();
-
-            return createBookDto;
+            return await createBookFaker(50);
         } catch (error) {
             if (error.message.startsWith('Book with id')) {
                 return {
