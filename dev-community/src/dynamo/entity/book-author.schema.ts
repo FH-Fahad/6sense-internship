@@ -2,7 +2,7 @@ export const BookAuthorsSchema = {
     TableName: 'BookAuthors',
     KeySchema: [
         { AttributeName: 'bookId', KeyType: 'HASH' },
-        { AttributeName: 'authorId', KeyType: 'RANGE' }  // Sort key
+        { AttributeName: 'authorId', KeyType: 'RANGE' }
     ],
     AttributeDefinitions: [
         { AttributeName: 'bookId', AttributeType: 'N' },

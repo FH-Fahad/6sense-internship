@@ -18,11 +18,11 @@ export class DynamooseService {
         });
     }
 
-    async createTable() {
+    createTable() {
         try {
             const book = dynamoose.model('Book', BookSchema);
 
-            await new dynamoose.Table('Book', [book]);
+            new dynamoose.Table('Book', [book]);
 
             console.log(`Table created successfully`);
         } catch (error) {
@@ -30,7 +30,7 @@ export class DynamooseService {
         }
     }
 
-    async createBook(createBookDto: CreateBookDto): Promise<any> {
+    createBook(createBookDto: CreateBookDto): Promise<any> {
         try {
             const book = dynamoose.model('Book', BookSchema);
 
@@ -42,7 +42,7 @@ export class DynamooseService {
         }
     }
 
-    async findAllBooks(): Promise<any> {
+    findAllBooks(): Promise<any> {
         try {
             const book = dynamoose.model('Book', BookSchema);
 
@@ -51,33 +51,4 @@ export class DynamooseService {
             console.log(error);
         }
     }
-
-    // async deleteTable() {
-    //     await dynamoose.model('Book').table.delete();
-    // }
-
-    // async putItem(item) {
-    //     const book = new dynamoose.model('Book')(item);
-    //     return book.save();
-    // }
-
-    // async getItem(id) {
-    //     return dynamoose.model('Book').get(id);
-    // }
-
-    // async scanItems() {
-    //     return dynamoose.model('Book').scan().exec();
-    // }
-
-    // async queryItems(id) {
-    //     return dynamoose.model('Book').query('id').eq(id).exec();
-    // }
-
-    // async updateItem(id, item) {
-    //     return dynamoose.model('Book').update({ id }, item);
-    // }
-
-    // async deleteItem(id) {
-    //     return dynamoose.model('Book').delete(id);
-    // }
 }

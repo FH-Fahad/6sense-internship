@@ -6,6 +6,7 @@ import { Post, PostSchema } from './entity/post.Schema';
 import { DevModule } from '../dev/dev.module';
 import { DevPost, DevPostSchema } from '../dev-post/entity/dev-post.Schema';
 import { DevPostService } from '../dev-post/dev-post.service';
+import { PostComment, PostCommentSchema } from '../post-comment/entity/post-comment.Schema';
 
 @Module({
   imports: [
@@ -18,6 +19,10 @@ import { DevPostService } from '../dev-post/dev-post.service';
       {
         name: DevPost.name,
         schema: DevPostSchema
+      },
+      {
+        name: PostComment.name,
+        schema: PostCommentSchema
       }
     ])
   ],

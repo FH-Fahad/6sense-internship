@@ -10,7 +10,7 @@ export class PostCommentService {
         @InjectModel('PostComment') private readonly postCommentModel: Model<PostComment>
     ) { }
 
-    async createPostComment(postComment: PostCommentDto) {
+    async createPostComment(postComment: PostCommentDto): Promise<any> {
         const postCommentModel = new this.postCommentModel(postComment);
         return await postCommentModel.save();
     }

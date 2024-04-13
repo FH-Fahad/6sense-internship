@@ -141,7 +141,8 @@ export class DynamoService {
 
     // Find all books by an author
     async findBooksByAuthorId(authorId: number) {
-        //TODO: Implement find books by authorId
+
+        //TODO: Find all books by an author
         try {
             const bookAuthorParams = {
                 TableName: BookAuthorsSchema.TableName,
@@ -155,20 +156,18 @@ export class DynamoService {
 
             const bookIds = bookAuthorResult.Items.map(item => item.bookId);
 
-            const books = [];
-
-            for (const bookId of bookIds) {
+            const booksPromises = bookIds.map(async bookId => {
                 const bookParams = {
                     TableName: BookSchema.TableName,
                     Key: {
                         'bookId': bookId,
                     }
                 };
-
                 const bookResult = await dynamoDBClient().get(bookParams).promise();
-                books.push(bookResult.Item);
-            }
-            return books;
+                return bookResult.Item;
+            });
+
+            return await Promise.all(booksPromises);
         } catch (error) {
             console.error('Error fetching books by author:', error);
             throw error;

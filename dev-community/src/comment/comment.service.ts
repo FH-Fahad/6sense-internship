@@ -40,11 +40,13 @@ export class CommentService {
   // Find all comments by post ID
   async findAllByPostId(postId: Mongoose.Types.ObjectId): Promise<Comment[]> {
     const aggregate = [];
+
     aggregate.push({
       $match: {
         postId: new Types.ObjectId(postId)
       }
     });
+
     aggregate.push({
       $lookup: {
         from: 'comments',
@@ -53,10 +55,12 @@ export class CommentService {
         as: 'comment'
       }
     });
-    //used $unwind to flatten the array, else it would be an array of arrays
+
+    // used $unwind to flatten the array to an object.
     aggregate.push({
       $unwind: '$comment'
     });
+
     aggregate.push({
       $project: {
         _id: '$comment._id',
@@ -65,11 +69,9 @@ export class CommentService {
         updatedAt: '$comment.updatedAt'
       }
     });
+
     const res = await this.postCommentModel.aggregate(aggregate);
     return res;
-    // const postComments = await this.postCommentModel.find({ postId }).exec();
-    // const commentIds = postComments.map(postComment => postComment.commentId);
-    // return this.commentModel.find({ _id: { $in: commentIds } }).exec();
   }
 
   // Find one comment by comment ID
