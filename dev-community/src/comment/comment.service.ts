@@ -15,12 +15,9 @@ export class CommentService {
     @InjectModel('PostComment') private readonly postCommentModel: Model<PostComment>,
   ) { }
 
-
   // Create a new comment
   async create(createCommentDto: CreateCommentDto, postId: Mongoose.Types.ObjectId): Promise<Comment> {
-    const { content } = createCommentDto;
-
-    const comment = new this.commentModel({ content });
+    const comment = new this.commentModel({ content: createCommentDto.content });
 
     try {
       const saveComment = await comment.save();
@@ -76,7 +73,9 @@ export class CommentService {
 
   // Find one comment by comment ID
   async findOne(commentId: Mongoose.Types.ObjectId): Promise<Comment | null> {
-    if (!Mongoose.Types.ObjectId.isValid(commentId)) {
+    const isValidCommentId = Mongoose.Types.ObjectId.isValid(commentId)
+
+    if (!isValidCommentId) {
       throw new BadRequestException('Invalid comment ID');
     }
 
@@ -91,7 +90,9 @@ export class CommentService {
 
   // Update a comment
   async update(commentId: Mongoose.Types.ObjectId, updateCommentDto: UpdateCommentDto): Promise<Comment> {
-    if (!Mongoose.Types.ObjectId.isValid(commentId)) {
+    const isValidCommentId = Mongoose.Types.ObjectId.isValid(commentId)
+
+    if (!isValidCommentId) {
       throw new BadRequestException('Invalid comment ID');
     }
 
@@ -101,12 +102,16 @@ export class CommentService {
       throw new BadRequestException(`Comment with id: ${commentId} not found`);
     }
 
-    return await this.commentModel.findByIdAndUpdate(commentId, updateCommentDto, { new: true })
+    const updatedComment = await this.commentModel.findByIdAndUpdate(commentId, updateCommentDto);
+
+    return updatedComment;
   }
 
   // Remove a comment
   async remove(commentId: Mongoose.Types.ObjectId): Promise<Comment> {
-    if (!Mongoose.Types.ObjectId.isValid(commentId)) {
+    const isValidCommentId = Mongoose.Types.ObjectId.isValid(commentId)
+
+    if (!isValidCommentId) {
       throw new BadRequestException('Invalid comment ID');
     }
 
@@ -118,7 +123,8 @@ export class CommentService {
 
     try {
       await this.postCommentModel.deleteOne({ commentId });
-      return await this.commentModel.findByIdAndDelete(commentId);
+      const deletedComment = await this.commentModel.findByIdAndDelete(commentId);
+      return deletedComment;
     } catch (error) {
       throw new InternalServerErrorException(`Something went wrong`);
     }
