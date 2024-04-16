@@ -8,7 +8,7 @@ import { DevPostDto } from './dto/dev-post.dto';
 export class DevPostService {
     constructor(@InjectModel(DevPost.name) private devPostModel: Model<DevPost>) { }
 
-    async createDevPost(devPostDto: DevPostDto): Promise<DevPost> {
+    async createDevPost(devPostDto: DevPostDto): Promise<any> {
         const createdDevPost = new this.devPostModel(devPostDto);
         return createdDevPost.save();
     }

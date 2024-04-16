@@ -21,15 +21,15 @@ export class CommentController {
   }
 
   // Get all comment by post Id
-  @Get('/all/:postId')
-  findAll(@GetCurrentPostId() postId: Mongoose.Types.ObjectId): Promise<Comment[]> {
-    return this.commentService.findAllByPostId(postId);
-  }
+  // @Get('/all/:postId')
+  // findAllCommentsByPostId(@GetCurrentPostId() postId: Mongoose.Types.ObjectId): Promise<Comment[]> {
+  //   return this.commentService.findAllCommentsByPostId(postId);
+  // }
 
   // Get comment by Id
   @Get(':commentId')
-  findOne(@Param('commentId') commentId: Mongoose.Types.ObjectId): Promise<Comment> {
-    return this.commentService.findOne(commentId);
+  findById(@Param('commentId') commentId: Mongoose.Types.ObjectId): Promise<Comment> {
+    return this.commentService.findById(commentId);
   }
 
   // Update a comment

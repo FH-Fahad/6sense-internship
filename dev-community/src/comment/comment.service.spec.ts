@@ -1,109 +1,239 @@
-import { Test, TestingModule } from '@nestjs/testing';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { Test, TestingModule } from "@nestjs/testing";
 import { CommentService } from "./comment.service";
-import Mongoose from 'mongoose';
-
-const mockCommentService = {
-    create: jest.fn((comment) => ({ ...comment, id: '660d2eff898f6de0c76328e' })),
-
-    findOne: jest.fn(() => ({ id: '660d2eff898f6d8e0c76328e' })),
-
-    update: jest.fn((commentId, mockUpdateComment) => ({ ...commentId, ...mockUpdateComment })),
-
-    remove: jest.fn((commentId) => ({ ...commentId })),
-};
+import { getModelToken } from "@nestjs/mongoose";
+import mongoose, { Types, Model } from "mongoose";
+import { Comment } from './entity/comment.Schema';
+import { PostCommentService } from "../post-comment/post-comment.service";
+import { PostComment } from "../post-comment/entity/post-comment.Schema";
+import { BadRequestException, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 
 describe('CommentService', () => {
     let commentService: CommentService;
+    let postCommentService: PostCommentService;
+    let commentModel: Model<Comment>;
+    let postCommentModel: Model<PostComment>;
+
+
+    const mockCommentService = {
+        create: jest.fn(),
+        findById: jest.fn(),
+        findByIdAndUpdate: jest.fn(),
+        findByIdAndDelete: jest.fn(),
+    };
+
+    const mockPostCommentService = {
+        createPostComment: jest.fn(),
+        deleteOne: jest.fn(),
+    };
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 CommentService,
+                PostCommentService,
                 {
-                    provide: CommentService,
-                    useValue: mockCommentService,
+                    provide: getModelToken(Comment.name),
+                    useValue: mockCommentService
                 },
+                {
+                    provide: getModelToken(PostComment.name),
+                    useValue: mockPostCommentService
+                }
             ],
         }).compile();
 
         commentService = module.get<CommentService>(CommentService);
+        postCommentService = module.get<PostCommentService>(PostCommentService);
+        commentModel = module.get<Model<Comment>>(getModelToken(Comment.name));
+        postCommentModel = module.get<Model<PostComment>>(getModelToken(PostComment.name));
     });
 
-    describe('create a comment', () => {
+    const mockCommentResponse: any = {
+        _id: '5f5a3f4e4e5e7d5f5a3f4e4e',
+        content: 'This is a comment'
+    }
 
-        const mockComment = {
-            content: 'This is a comment',
-        };
+    const mockDeleteCommentResponse: any = {
+        _id: '5f5a3f4e4e5e7d5f5a3f4e4e',
+        content: 'This is a comment'
+    }
 
-        const mockCommentResponse = {
-            ...mockComment,
-            id: '660d2eff898f6de0c76328e',
-        };
+    const createCommentDto = {
+        content: 'This is a comment'
+    };
 
-        const postId = new Mongoose.Types.ObjectId('660d2eff898f6d8e0c76328d');
+    const updateCommentDto = {
+        content: 'This is an updated comment'
+    }
 
-        it('should create a new comment', async () => {
-            expect(mockCommentService.create).not.toHaveBeenCalled();
+    const mockUpdatedCommentResponse = {
+        _id: '5f5a3f4e4e5e7d5f5a3f4e4e',
+        content: 'This is an updated comment'
+    }
 
-            const comment = await commentService.create(mockComment, postId);
-            expect(comment).toEqual(mockCommentResponse);
+    const postId = '5f5a3f4e4e5e7d5f5a3f4e4e';
 
-            expect(mockCommentService.create).toHaveBeenCalled();
+
+    describe('create', () => {
+        it('should create a comment and associate it with the post', async () => {
+            jest.spyOn(commentModel, 'create').mockImplementationOnce(() => Promise.resolve(mockCommentResponse));
+
+            jest.spyOn(postCommentService, 'createPostComment').mockImplementationOnce(() => Promise.resolve(
+                {
+                    postId,
+                    commentId: mockCommentResponse._id
+                }
+            ));
+
+            const result = await commentService.create(createCommentDto, postId);
+
+            expect(commentModel.create).toHaveBeenCalledWith(createCommentDto);
+
+            expect(postCommentService.createPostComment).toHaveBeenCalledWith({
+                postId,
+                commentId: mockCommentResponse._id
+            });
+
+            expect(result).toEqual(mockCommentResponse);
+        });
+
+        it('should throw InternalServerErrorException if something goes wrong', async () => {
+            jest.spyOn(commentModel, 'create').mockRejectedValueOnce(new Error());
+
+            await expect(commentService.create(createCommentDto, postId)).rejects.toThrow(InternalServerErrorException);
+        });
+
+        it('should throw an error if postCommentService.createPostComment fails', async () => {
+            jest.spyOn(commentModel, 'create').mockImplementationOnce(() => Promise.resolve(mockCommentResponse));
+
+            jest.spyOn(postCommentService, 'createPostComment').mockRejectedValueOnce(new Error());
+
+            await expect(commentService.create(createCommentDto, postId)).rejects.toThrow(InternalServerErrorException);
+        });
+
+        it('should throw an error if commentModel.create fails', async () => {
+            jest.spyOn(commentModel, 'create').mockRejectedValueOnce(new Error());
+
+            await expect(commentService.create(createCommentDto, postId)).rejects.toThrow(InternalServerErrorException);
+        });
+
+        it('should throw an error if postId is not a valid ObjectId', async () => {
+            const invalidPostId = '000000000000000000000000';
+
+            await expect(commentService.create(createCommentDto, invalidPostId)).rejects.toThrow(InternalServerErrorException);
+        });
+
+        it('should throw an error if no comment is passed', async () => {
+            await expect(commentService.create(null, postId)).rejects.toThrow(InternalServerErrorException);
         });
     });
 
-    describe('find one comment by comment Id', () => {
 
-        const commentId = new Mongoose.Types.ObjectId('660d2eff898f6d8e0c76328e');
+    describe('findById', () => {
+        it('should return a comment with valid commentId', async () => {
+            jest.spyOn(commentModel, 'findById').mockResolvedValueOnce(mockCommentResponse);
 
-        const mockCommentResponse = {
-            id: '660d2eff898f6d8e0c76328e',
-        };
+            const result = await commentService.findById(mockCommentResponse._id);
 
-        it('should find one comment by comment Id', async () => {
-            expect(mockCommentService.findOne).not.toHaveBeenCalled();
+            expect(commentModel.findById).toHaveBeenCalledWith(mockCommentResponse._id);
+            expect(result).toEqual(mockCommentResponse);
+        });
 
-            const comment = await commentService.findOne(commentId);
-            expect(comment).toEqual(mockCommentResponse);
+        it('should throw NotFoundException if comment is not found', async () => {
+            jest.spyOn(commentModel, 'findById').mockResolvedValueOnce(null);
 
-            expect(mockCommentService.findOne).toHaveBeenCalled();
+            await expect(commentService.findById(mockCommentResponse._id)).rejects.toThrow(
+                NotFoundException,
+            );
+
+            expect(commentModel.findById).toHaveBeenCalledWith(mockCommentResponse._id);
+        });
+
+        it('should throw BadRequestException if invalid commentId is provided', async () => {
+            const invalidCommentId = 'notvalid'
+
+            jest.spyOn(mongoose.Types.ObjectId, 'isValid').mockReturnValueOnce(false);
+
+            await expect(commentService.findById(invalidCommentId)).rejects.toThrow(
+                BadRequestException,
+            );
         });
     });
 
-    describe('should update a comment by comment Id', () => {
 
-        const commentId = new Mongoose.Types.ObjectId('660d2eff898f6d8e0c76328e');
+    describe('update a comment', () => {
+        it('should update a comment with valid commentId', async () => {
+            jest.spyOn(commentService, 'findById').mockResolvedValueOnce(mockCommentResponse);
 
-        const mockUpdateComment = {
-            content: 'This is an updated comment'
-        };
+            jest.spyOn(commentModel, 'findByIdAndUpdate').mockResolvedValueOnce(mockUpdatedCommentResponse);
 
-        const mockCommentResponse = {
-            ...mockUpdateComment,
-            ...commentId,
-        };
+            const result = await commentService.update(mockCommentResponse._id, updateCommentDto);
 
-        it('should update a comment by comment Id', async () => {
-            expect(mockCommentService.update).not.toHaveBeenCalled();
+            expect(result).toEqual(mockUpdatedCommentResponse);
+        });
 
-            const comment = await commentService.update(commentId, mockUpdateComment);
-            expect(comment).toEqual(mockCommentResponse);
+        it('should throw BadRequestException if invalid commentId is provided', async () => {
+            const invalidCommentId = 'invalid'
 
-            expect(mockCommentService.update).toHaveBeenCalled();
+            await expect(commentService.update(invalidCommentId, createCommentDto)).rejects.toThrow(
+                BadRequestException,
+            );
+        });
+
+        it('should throw NotFoundException if comment is not found', async () => {
+            jest.spyOn(commentService, 'findById').mockResolvedValueOnce(null);
+
+            await expect(commentService.update(mockCommentResponse._id, createCommentDto)).rejects.toThrow(
+                NotFoundException,
+            );
         });
     });
 
-    describe('should remove a comment by comment Id', () => {
 
-        it('should remove a comment by comment Id', async () => {
-            const commentId = new Mongoose.Types.ObjectId('660d2eff898f6d8e0c76328e');
+    describe('remove a comment', () => {
+        it('should remove a comment with valid commentId', async () => {
+            jest.spyOn(commentModel, 'findById').mockResolvedValueOnce(mockCommentResponse);
 
-            expect(mockCommentService.remove).not.toHaveBeenCalled();
+            jest.spyOn(postCommentModel, 'deleteOne').mockResolvedValueOnce(mockCommentResponse);
 
-            const comment = await commentService.remove(commentId);
-            expect(comment).toEqual(commentId);
+            jest.spyOn(commentModel, 'findByIdAndDelete').mockResolvedValueOnce(mockDeleteCommentResponse);
 
-            expect(mockCommentService.remove).toHaveBeenCalled();
+            const result = await commentService.remove(mockCommentResponse._id);
+
+            expect(commentModel.findById).toHaveBeenCalledWith(mockCommentResponse._id);
+
+            expect(postCommentModel.deleteOne).toHaveBeenCalledWith({ commentId: mockCommentResponse._id });
+
+            expect(commentModel.findByIdAndDelete).toHaveBeenCalledWith(mockCommentResponse._id);
+
+            expect(result).toEqual(mockDeleteCommentResponse);
+        });
+
+        it('should throw BadRequestException if invalid commentId is provided', async () => {
+            const invalidCommentId = 'invalid'
+
+            jest.spyOn(mongoose.Types.ObjectId, 'isValid').mockReturnValue(false);
+
+            await expect(commentService.remove(invalidCommentId)).rejects.toThrow(
+                BadRequestException,
+            );
+        });
+
+        it('should throw NotFoundException if comment is not found', async () => {
+            jest.spyOn(commentModel, 'findById').mockResolvedValueOnce(null);
+
+            await expect(commentService.remove(mockCommentResponse._id)).rejects.toThrow(
+                'Invalid comment ID',
+            );
+
+            expect(commentModel.findById).toHaveBeenCalledWith(mockCommentResponse._id);
+        });
+
+        it('should throw BadRequestException if no comment is passed', async () => {
+            await expect(commentService.remove(mockCommentResponse._id)).rejects.toThrow(
+                BadRequestException,
+            );
         });
     });
 });
