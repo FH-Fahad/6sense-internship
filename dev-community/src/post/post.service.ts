@@ -19,13 +19,9 @@ export class PostService {
 
   // Creating a post
   async create(createPostDto: CreatePostDto, devId: Mongoose.Types.ObjectId): Promise<Post> {
-    const post = new this.postModel({
-      title: createPostDto.title,
-      content: createPostDto.content
-    });
 
     try {
-      const postSave = await post.save();
+      const postSave = await this.postModel.create(createPostDto);
 
       const devPost = {
         postId: postSave._id,
