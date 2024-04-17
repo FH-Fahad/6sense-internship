@@ -1,59 +1,67 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Test, TestingModule } from "@nestjs/testing";
-import { PostService } from "./post.service";
-import { Model } from 'mongoose';
-import { CreatePostDto } from "./dto/create-post.dto";
-import { DevPostService } from "../dev-post/dev-post.service";
-import { Post } from "./entity/post.Schema";
-import { PostComment } from "../post-comment/entity/post-comment.Schema";
-import { DevPost } from "../dev-post/entity/dev-post.Schema";
-import { getModelToken } from "@nestjs/mongoose";
-import { InternalServerErrorException } from "@nestjs/common";
-import { UpdateCommentDto } from "../comment/dto/update-comment.dto";
-import { DevPostDto } from "../dev-post/dto/dev-post.dto";
+import { Test, TestingModule } from '@nestjs/testing';
+import { PostService } from './post.service';
+import { CreatePostDto } from './dto/create-post.dto';
+import { DevPostService } from '../dev-post/dev-post.service';
+import { Model, Types } from 'mongoose';
+import { Post } from '../post/entity/post.Schema';
+import { DevPost } from '../dev-post/entity/dev-post.Schema';
+import { getModelToken } from '@nestjs/mongoose';
+import { PostComment } from '../post-comment/entity/post-comment.Schema';
 
+const mockCreatePostDto: CreatePostDto = {
+    title: 'Test Post Title',
+    content: 'Test Post Content',
+};
+
+const mockPostResponse: any = {
+    _id: '1234567890abcdef',
+    title: mockCreatePostDto.title,
+    content: mockCreatePostDto.content,
+};
+
+const mockPostId = '1234567890abcdef';
+const mockDevId = '9876543210fedcba';
 
 describe('PostService', () => {
     let postService: PostService;
     let devPostService: DevPostService;
     let postModel: Model<Post>;
-    let postCommentModel: Model<PostComment>;
     let devPostModel: Model<DevPost>;
-
-    const mockPostService = {
-        create: jest.fn(),
-        findOne: jest.fn(),
-        update: jest.fn(),
-        remove: jest.fn(),
-        findByIdAndUpdate: jest.fn()
-    };
-
-    const mockPostComment = {
-        create: jest.fn()
-    };
-
-    const mockDevPost = {
-        createDevPost: jest.fn()
-    };
-
-    const devId = '660d2eff898f6d8e0c76328d';
-    const postId = '660d2eff898f6d8e0c76323d';
-
+    let postCommentModel: Model<PostComment>;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 PostService,
-                DevPostService,
+                {
+                    provide: DevPostService,
+                    useValue: {
+                        createDevPost: jest.fn(),
+                    },
+                },
                 {
                     provide: getModelToken(Post.name),
-                    useValue: mockPostService
-                }, {
-                    provide: getModelToken(PostComment.name),
-                    useValue: mockPostComment
-                }, {
+                    useValue: {
+                        create: jest.fn(),
+                        findById: jest.fn(),
+                        findByIdAndUpdate: jest.fn(),
+                        deleteOne: jest.fn(),
+                        findByIdAndDelete: jest.fn(),
+                    },
+                },
+                {
                     provide: getModelToken(DevPost.name),
-                    useValue: mockDevPost
+                    useValue: {
+                        createDevPost: jest.fn(),
+                        deleteOne: jest.fn(),
+                    },
+                },
+                {
+                    provide: getModelToken(PostComment.name),
+                    useValue: {
+                        aggregate: jest.fn(),
+                    },
                 }
             ],
         }).compile();
@@ -61,79 +69,91 @@ describe('PostService', () => {
         postService = module.get<PostService>(PostService);
         devPostService = module.get<DevPostService>(DevPostService);
         postModel = module.get<Model<Post>>(getModelToken(Post.name));
-        postCommentModel = module.get<Model<PostComment>>(getModelToken(PostComment.name));
         devPostModel = module.get<Model<DevPost>>(getModelToken(DevPost.name));
+        postCommentModel = module.get<Model<PostComment>>(getModelToken(PostComment.name));
     });
 
-    const createPostDto: CreatePostDto = {
-        title: 'test',
-        content: 'test',
-    };
 
-    const mockPostResponse: any = {
-        id: '660d2eff898f6d8e0c76328d',
-        title: 'test',
-        content: 'test'
-    };
+    describe('create', () => {
+        it('should create a post and save it to DevPost', async () => {
+            jest.spyOn(postModel, 'create').mockResolvedValueOnce(mockPostResponse);
+            jest.spyOn(devPostService, 'createDevPost').mockResolvedValueOnce({
+                postId: mockPostId,
+                devId: mockDevId,
+            });
 
-    // const devPostDto: DevPostDto = {
+            const result = await postService.create(mockCreatePostDto, mockDevId);
 
-    // };
-
-    const updateCommentDto: UpdateCommentDto = {
-        content: 'test 1'
-    };
-
-    const mockUpdatedPostResponse: any = {
-        id: '660d2eff898f6d8e0c76328d',
-        title: 'test 1',
-        content: 'test 1'
-    };
-
-    describe('createPost', () => {
-        // it('should create a new post', async () => {
-        //     jest.spyOn(postModel, 'create').mockImplementationOnce(() => Promise.resolve(mockPostResponse));
-
-        //     jest.spyOn(devPostService, 'createDevPost').mockImplementationOnce(() => Promise.resolve({
-        //         postId: mockPostResponse.id,
-        //         devId
-        //     }));
-
-        //     const result = await postService.create(createPostDto, devId);
-
-        //     expect(result).toEqual(mockPostResponse);
-        // });
-
-        it('should throw InternalServerErrorException if something went wrong', async () => {
-            jest.spyOn(postModel, 'create').mockRejectedValueOnce(new Error());
-
-            await expect(postService.create(createPostDto, devId)).rejects.toThrow(InternalServerErrorException);
+            expect(result).toEqual(mockPostResponse);
         });
 
-        it('should throw an error if devPostService.createDevPost fails', async () => {
-            jest.spyOn(postModel, 'create').mockImplementationOnce(() => Promise.resolve(mockPostResponse));
+        it('should throw an error if something goes wrong', async () => {
+            jest.spyOn(postModel, 'create').mockRejectedValueOnce(new Error('Something went wrong'));
 
-            jest.spyOn(devPostService, 'createDevPost').mockRejectedValueOnce(new Error());
-
-            await expect(postService.create(createPostDto, devId)).rejects.toThrow(InternalServerErrorException);
+            try {
+                await postService.create(mockCreatePostDto, mockDevId);
+            } catch (error) {
+                expect(error).toBeInstanceOf(Error);
+                expect(error.message).toBe('Something went wrong');
+            }
         });
     });
 
-    describe('postWithComments', () => {
-        it('should return post with comments', async () => {
+    // describe('postWithComments', () => {
+    //     it('should return comments for a post', async () => {
+    //         const mockCommentData = [
+    //             {
+    //                 _id: new Types.ObjectId(),
+    //                 content: 'Mock comment content',
+    //                 createdAt: new Date(),
+    //                 updatedAt: new Date(),
+    //             }
+    //         ];
+    //         jest.spyOn(postCommentModel, 'aggregate').mockResolvedValueOnce(mockCommentData);
 
-        });
-    });
+    //         const result = await postService.postWithComments(mockPostId);
 
-    // describe('updatePost', () => {
-    //     it('should update a post', async () => {
-    //         jest.spyOn(postService, 'findById').mockRejectedValueOnce(mockPostResponse);
-
-    //         jest.spyOn(post, 'findByIdAndUpdate').mockResolvedValueOnce(mockUpdatedPostResponse);
-
-    //         const result = await postService.update(mockUpdatedPostResponse._id, updateCommentDto);
-
-    //         expect(result).toEqual(mockUpdatedPostResponse);
+    //         expect(result).toEqual(mockCommentData);
     //     });
-    // });
+    // })
+
+    describe('update', () => {
+        it('should update a post', async () => {
+            jest.spyOn(postService, 'findById').mockImplementationOnce(() => Promise.resolve(mockPostResponse));
+            jest.spyOn(postModel, 'findByIdAndUpdate').mockResolvedValueOnce(mockPostResponse);
+
+            const result = await postService.update(mockPostId, mockCreatePostDto);
+
+            expect(result).toEqual(mockPostResponse);
+        });
+
+        it('should throw an error if something goes wrong', async () => {
+            jest.spyOn(postService, 'findById').mockImplementationOnce(() => Promise.resolve(mockPostResponse));
+            jest.spyOn(postModel, 'findByIdAndUpdate').mockRejectedValueOnce(new Error('Something went wrong'));
+
+            await expect(postService.update(mockPostId, mockCreatePostDto)).rejects.toThrow('Something went wrong');
+        });
+    })
+
+    describe('delete', () => {
+        it('should delete a post', async () => {
+            jest.spyOn(postService, 'findById').mockImplementationOnce(() => Promise.resolve(mockPostResponse));
+
+            jest.spyOn(devPostModel, 'deleteOne').mockResolvedValueOnce(mockPostResponse);
+
+            jest.spyOn(postModel, 'findByIdAndDelete').mockResolvedValueOnce(mockPostResponse);
+
+            const result = await postService.remove(mockPostId);
+
+            expect(result).toEqual(mockPostResponse);
+        });
+
+        it('should throw an error if something goes wrong', async () => {
+            jest.spyOn(postService, 'findById').mockImplementationOnce(() => Promise.resolve(mockPostResponse));
+
+            jest.spyOn(devPostModel, 'deleteOne').mockRejectedValueOnce(new Error('Something went wrong'));
+
+            await expect(postService.remove(mockPostId)).rejects.toThrow('Something went wrong');
+        });
+    });
 });

@@ -17,30 +17,30 @@ export class DevService {
 
   // Create a new dev
   async create(createDevDto: CreateDevDto): Promise<Dev> {
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(createDevDto.password, salt);
-
-    const dev = new this.devModel({
-      email: createDevDto.email,
-      password: hashedPassword,
-      skills: createDevDto.skills,
-      experience: createDevDto.experience,
-      refreshToken: ''
-    });
+    const hashedPassword = await bcrypt.hash(createDevDto.password, 8);
 
     try {
-      return await dev.save();
+      const dev = await this.devModel.create({
+        email: createDevDto.email,
+        password: hashedPassword,
+        skills: createDevDto.skills,
+        experience: createDevDto.experience,
+        refreshToken: ''
+      });
+
+      return dev;
     } catch (error) {
       throw new InternalServerErrorException(`Something went wrong`);
     }
   }
+
 
   // Login a dev
   async login(loginDevDto: LoginDevDto) {
     const dev = await this.devModel.findOne({ email: loginDevDto.email });
 
     if (!dev) {
-      throw new BadRequestException(`Dev with email: ${loginDevDto.email} not found`);
+      throw new BadRequestException(`Dev not found`);
     }
 
     const comparePassword = await bcrypt.compare(loginDevDto.password, dev.password);
@@ -49,20 +49,16 @@ export class DevService {
       throw new InternalServerErrorException(`Invalid password`);
     }
 
-    try {
-      if (dev && comparePassword) {
-        const { _id } = dev;
-        const payload = { id: _id };
-        const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
-        const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+    if (dev && comparePassword) {
+      const { _id } = dev;
+      const payload = { id: _id };
 
-        dev.refreshToken = refreshToken;
-        await dev.save({ validateBeforeSave: false });
+      const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+      const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
-        return { _id, accessToken, refreshToken };
-      }
-    } catch (error) {
-      throw new InternalServerErrorException(`Something went wrong`);
+      await this.devModel.updateOne({ _id }, { refreshToken });
+
+      return { _id, accessToken, refreshToken };
     }
   }
 
@@ -72,11 +68,11 @@ export class DevService {
   }
 
   // Find a dev by id
-  findOne(devId: string): Promise<Dev> {
-    const dev = this.devModel.findById(devId);
+  async findOne(devId: string): Promise<Dev> {
+    const dev = await this.devModel.findById(devId);
 
     if (!dev) {
-      throw new BadRequestException(`Dev with id: ${devId} not found`);
+      throw new BadRequestException(`Dev not found`);
     }
 
     return dev;
@@ -86,21 +82,13 @@ export class DevService {
   async update(devId: string, updateDevDto: UpdateDevDto): Promise<Dev> {
     await this.findOne(devId);
 
-    try {
-      return this.devModel.findByIdAndUpdate(devId, updateDevDto, { new: true });
-    } catch (error) {
-      throw new InternalServerErrorException(`Something went wrong`);
-    }
+    return await this.devModel.findByIdAndUpdate(devId, updateDevDto, { new: true });
   }
 
   // Remove a dev
   async remove(devId: string): Promise<Dev> {
     await this.findOne(devId);
 
-    try {
-      return this.devModel.findByIdAndDelete(devId);
-    } catch (error) {
-      throw new InternalServerErrorException(`Something went wrong`);
-    }
+    return await this.devModel.findByIdAndDelete(devId);
   }
 }

@@ -93,7 +93,7 @@ export class PostService {
     const post = this.postModel.findById(postId);
 
     if (!post) {
-      throw new InternalServerErrorException(`Post with id: ${postId} not found`);
+      throw new InternalServerErrorException(`Post not found`);
     }
 
     const comments = await this.postWithComments(postId);
