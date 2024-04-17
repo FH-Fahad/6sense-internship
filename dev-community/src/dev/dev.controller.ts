@@ -4,7 +4,6 @@ import { LoginDevDto } from "./dto/login-dev.dto"
 import { CreateDevDto } from './dto/create-dev.dto';
 import { UpdateDevDto } from './dto/update-dev.dto';
 import { DevService } from './dev.service';
-import Mongoose from 'mongoose';
 
 @Controller('dev')
 export class DevController {
@@ -30,19 +29,19 @@ export class DevController {
 
   // Get a dev
   @Get(':devId')
-  findOne(@Param('devId') devId: Mongoose.Types.ObjectId): Promise<Dev> {
+  findOne(@Param('devId') devId: string): Promise<Dev> {
     return this.devService.findOne(devId);
   }
 
   //Update a dev
   @Patch(':devId')
-  update(@Param('devId') devId: Mongoose.Types.ObjectId, @Body() updateDevDto: UpdateDevDto): Promise<Dev> {
+  update(@Param('devId') devId: string, @Body() updateDevDto: UpdateDevDto): Promise<Dev> {
     return this.devService.update(devId, updateDevDto);
   }
 
   // Delete a dev
   @Delete(':devId')
-  remove(@Param('devId') devId: Mongoose.Types.ObjectId): Promise<Dev> {
+  remove(@Param('devId') devId: string): Promise<Dev> {
     return this.devService.remove(devId);
   }
 }

@@ -5,7 +5,6 @@ import { UpdatePostDto } from './dto/update-post.dto';
 import { JwtStrategy } from '../dev/jwt-strategy';
 import { PostService } from './post.service';
 import { GetCurrentDevId } from '../common/decorators/get-user-id.decorator';
-import Mongoose from 'mongoose';
 
 @Controller('post')
 @UseGuards(AuthGuard())
@@ -17,31 +16,31 @@ export class PostController {
   // Creating a post
   @Post()
   async create(@Body() createPostDto: CreatePostDto,
-    @GetCurrentDevId() devId: Mongoose.Types.ObjectId) {
+    @GetCurrentDevId() devId: string) {
     return this.postService.create(createPostDto, devId);
   }
 
   // Get all post by dev Id
   @Get()
-  findAllPostByDevId(@GetCurrentDevId() devId: Mongoose.Types.ObjectId) {
+  findAllPostByDevId(@GetCurrentDevId() devId: string) {
     return this.postService.findAllPostByDevId(devId);
   }
 
   // Get a post
   @Get(':id')
-  findOne(@Param('id') id: Mongoose.Types.ObjectId) {
-    return this.postService.findOne(id);
+  findOne(@Param('id') id: string) {
+    return this.postService.findById(id);
   }
 
   // Update a post
   @Patch(':id')
-  update(@Param('id') id: Mongoose.Types.ObjectId, @Body() updatePostDto: UpdatePostDto) {
+  update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
     return this.postService.update(id, updatePostDto);
   }
 
   // Delete a post
   @Delete(':id')
-  remove(@Param('id') id: Mongoose.Types.ObjectId) {
+  remove(@Param('id') id: string) {
     return this.postService.remove(id);
   }
 }

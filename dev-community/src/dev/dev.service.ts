@@ -7,7 +7,6 @@ import { Dev } from './entity/dev.Schema';
 import { CreateDevDto } from './dto/create-dev.dto';
 import { UpdateDevDto } from './dto/update-dev.dto';
 import { LoginDevDto } from './dto/login-dev.dto';
-import Mongoose from 'mongoose';
 
 @Injectable()
 export class DevService {
@@ -73,7 +72,7 @@ export class DevService {
   }
 
   // Find a dev by id
-  findOne(devId: Mongoose.Types.ObjectId): Promise<Dev> {
+  findOne(devId: string): Promise<Dev> {
     const dev = this.devModel.findById(devId);
 
     if (!dev) {
@@ -84,7 +83,7 @@ export class DevService {
   }
 
   // Update a dev info
-  async update(devId: Mongoose.Types.ObjectId, updateDevDto: UpdateDevDto): Promise<Dev> {
+  async update(devId: string, updateDevDto: UpdateDevDto): Promise<Dev> {
     await this.findOne(devId);
 
     try {
@@ -95,7 +94,7 @@ export class DevService {
   }
 
   // Remove a dev
-  async remove(devId: Mongoose.Types.ObjectId): Promise<Dev> {
+  async remove(devId: string): Promise<Dev> {
     await this.findOne(devId);
 
     try {

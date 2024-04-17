@@ -34,7 +34,7 @@ export class CommentService {
   }
 
   // Find all comments by post ID
-  // async findAllCommentsByPostId(postId: Mongoose.Types.ObjectId): Promise<Comment[]> {
+  // async findAllCommentsByPostId(postId: string): Promise<Comment[]> {
   //   const aggregate = [];
 
   //   aggregate.push({
@@ -81,7 +81,7 @@ export class CommentService {
     const comment = await this.commentModel.findById(commentId);
 
     if (!comment) {
-      throw new NotFoundException(`Comment with id: ${commentId} not found`);
+      throw new NotFoundException(`Comment not found`);
     }
 
     return comment;
@@ -117,7 +117,7 @@ export class CommentService {
     const comment = await this.findById(commentId);
 
     if (!comment) {
-      throw new NotFoundException(`Comment with id: ${commentId} not found`);
+      throw new NotFoundException(`Comment not found`);
     }
 
     try {

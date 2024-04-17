@@ -2,7 +2,6 @@ import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { Like } from "./entity/like.Schema";
-import Mongoose from 'mongoose';
 import { CreateLikeDto } from "./dto/create-like.dto";
 
 @Injectable()
@@ -12,7 +11,7 @@ export class LikeService {
     ) { }
 
     // Liking or Disliking a post
-    async likePost(createLikeDto: CreateLikeDto, devId: Mongoose.Types.ObjectId): Promise<any> {
+    async likePost(createLikeDto: CreateLikeDto, devId: string): Promise<any> {
         const { postId, action } = createLikeDto;
 
         const like = new this.likeModel({ postId, devId, action });

@@ -9,7 +9,6 @@ export class DevPostService {
     constructor(@InjectModel(DevPost.name) private devPostModel: Model<DevPost>) { }
 
     async createDevPost(devPostDto: DevPostDto): Promise<any> {
-        const createdDevPost = new this.devPostModel(devPostDto);
-        return createdDevPost.save();
+        return this.devPostModel.create(devPostDto);
     }
 }

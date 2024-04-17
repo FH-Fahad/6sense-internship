@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import Mongoose, { Model, Types } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Post } from '../post/entity/post.Schema';
 import { DevPostService } from '../dev-post/dev-post.service';
 import { DevPost } from '../dev-post/entity/dev-post.Schema';
@@ -18,13 +18,13 @@ export class PostService {
   ) { }
 
   // Creating a post
-  async create(createPostDto: CreatePostDto, devId: Mongoose.Types.ObjectId): Promise<Post> {
+  async create(createPostDto: CreatePostDto, devId: string): Promise<Post> {
 
     try {
       const postSave = await this.postModel.create(createPostDto);
 
       const devPost = {
-        postId: postSave._id,
+        postId: postSave._id.toString(),
         devId
       };
 
@@ -36,7 +36,7 @@ export class PostService {
     }
   }
 
-  async postWithComments(postId: Mongoose.Types.ObjectId) {
+  async postWithComments(postId: string) {
     const aggregate = [];
 
     aggregate.push({
@@ -74,14 +74,14 @@ export class PostService {
   }
 
   // Get all post by dev Id
-  async findAllPostByDevId(devId: Mongoose.Types.ObjectId): Promise<any> {
+  async findAllPostByDevId(devId: string): Promise<any> {
     const devPosts = await this.devPostModel.find({ devId: devId }).exec();
     const postIds = devPosts.map(devPost => devPost.postId);
 
     const posts = await this.postModel.find({ _id: { $in: postIds } }).exec();
 
     const postWithComments = await Promise.all(posts.map(async post => {
-      const comments = await this.postWithComments(post._id);
+      const comments = await this.postWithComments(post._id.toString());
       return { post: post.toObject(), comments };
     }));
 
@@ -89,7 +89,7 @@ export class PostService {
   }
 
   // Get a post
-  async findOne(postId: Mongoose.Types.ObjectId) {
+  async findById(postId: string) {
     const post = this.postModel.findById(postId);
 
     if (!post) {
@@ -104,14 +104,14 @@ export class PostService {
   }
 
   // Update a post
-  async update(id: Mongoose.Types.ObjectId, updatePostDto: UpdatePostDto) {
-    await this.findOne(id);
+  async update(id: string, updatePostDto: UpdatePostDto) {
+    await this.findById(id);
     return this.postModel.findByIdAndUpdate(id, updatePostDto, { new: true });
   }
 
   // Delete a post
-  async remove(id: Mongoose.Types.ObjectId) {
-    await this.findOne(id);
+  async remove(id: string) {
+    await this.findById(id);
     await this.devPostModel.deleteOne({ postId: id });
     return this.postModel.findByIdAndDelete(id);
   }

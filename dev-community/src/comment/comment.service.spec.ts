@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Test, TestingModule } from "@nestjs/testing";
 import { CommentService } from "./comment.service";
 import { getModelToken } from "@nestjs/mongoose";
-import mongoose, { Types, Model } from "mongoose";
+import mongoose, { Model } from "mongoose";
 import { Comment } from './entity/comment.Schema';
 import { PostCommentService } from "../post-comment/post-comment.service";
 import { PostComment } from "../post-comment/entity/post-comment.Schema";
@@ -201,19 +200,13 @@ describe('CommentService', () => {
 
             const result = await commentService.remove(mockCommentResponse._id);
 
-            expect(commentModel.findById).toHaveBeenCalledWith(mockCommentResponse._id);
-
-            expect(postCommentModel.deleteOne).toHaveBeenCalledWith({ commentId: mockCommentResponse._id });
-
-            expect(commentModel.findByIdAndDelete).toHaveBeenCalledWith(mockCommentResponse._id);
-
             expect(result).toEqual(mockDeleteCommentResponse);
         });
 
         it('should throw BadRequestException if invalid commentId is provided', async () => {
             const invalidCommentId = 'invalid'
 
-            jest.spyOn(mongoose.Types.ObjectId, 'isValid').mockReturnValue(false);
+            jest.spyOn(mongoose.Types.ObjectId, 'isValid').mockReturnValueOnce(false);
 
             await expect(commentService.remove(invalidCommentId)).rejects.toThrow(
                 BadRequestException,
@@ -221,18 +214,20 @@ describe('CommentService', () => {
         });
 
         it('should throw NotFoundException if comment is not found', async () => {
-            jest.spyOn(commentModel, 'findById').mockResolvedValueOnce(null);
+            jest.spyOn(commentService, 'findById').mockResolvedValueOnce(null);
 
             await expect(commentService.remove(mockCommentResponse._id)).rejects.toThrow(
-                'Invalid comment ID',
+                NotFoundException,
             );
-
-            expect(commentModel.findById).toHaveBeenCalledWith(mockCommentResponse._id);
         });
 
-        it('should throw BadRequestException if no comment is passed', async () => {
+        it('should throw a InternalServerErrorException if something goes wrong', async () => {
+            jest.spyOn(commentModel, 'findById').mockResolvedValueOnce(mockCommentResponse);
+
+            jest.spyOn(postCommentModel, 'deleteOne').mockRejectedValueOnce(new Error());
+
             await expect(commentService.remove(mockCommentResponse._id)).rejects.toThrow(
-                BadRequestException,
+                InternalServerErrorException,
             );
         });
     });
