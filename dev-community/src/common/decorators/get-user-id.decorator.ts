@@ -3,6 +3,7 @@ import { ExecutionContext, createParamDecorator } from '@nestjs/common';
 export const GetCurrentDevId = createParamDecorator(
     (data, context: ExecutionContext): string => {
         const req = context.switchToHttp().getRequest();
+        console.log(req.user);
         return req.user.id;
     },
 );

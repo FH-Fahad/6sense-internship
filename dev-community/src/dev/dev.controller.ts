@@ -44,4 +44,10 @@ export class DevController {
   remove(@Param('devId') devId: string): Promise<Dev> {
     return this.devService.remove(devId);
   }
+
+  // Logout
+  @Get("logout/:devId")
+  logout(@Param('devId') devId: string) {
+    return this.devService.logout(devId);
+  }
 }

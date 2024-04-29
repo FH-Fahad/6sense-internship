@@ -51,7 +51,7 @@ export class DevService {
 
     if (dev && comparePassword) {
       const { _id } = dev;
-      const payload = { id: _id };
+      const payload = { id: _id, email: loginDevDto.email };
 
       const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
       const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
@@ -90,5 +90,18 @@ export class DevService {
     await this.findOne(devId);
 
     return await this.devModel.findByIdAndDelete(devId);
+  }
+
+  // Logout a dev
+  async logout(devId: string) {
+    const dev = await this.devModel.findOne({ _id: devId });
+
+    if (!dev) {
+      throw new BadRequestException(`Dev not found`);
+    }
+
+    await this.devModel.updateOne({ _id: devId }, { refreshToken: '' });
+
+    return { message: 'Logout successfully' };
   }
 }
