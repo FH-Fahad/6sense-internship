@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, Req } from '@nestjs/common';
 import { Dev } from './entity/dev.Schema';
 import { LoginDevDto } from "./dto/login-dev.dto"
 import { CreateDevDto } from './dto/create-dev.dto';
 import { UpdateDevDto } from './dto/update-dev.dto';
 import { DevService } from './dev.service';
+import { TokenRefreshInterceptor } from './interceptor/token-refresh.interceptor';
+import { CustomRequest } from './interfaces/accessToken.interface';
 
 @Controller('dev')
 export class DevController {
@@ -49,5 +51,13 @@ export class DevController {
   @Get("logout/:devId")
   logout(@Param('devId') devId: string) {
     return this.devService.logout(devId);
+  }
+
+  // Generate new access token from refresh token
+  @Post("/refresh-token")
+  @UseInterceptors(TokenRefreshInterceptor)
+  async refreshToken(@Body() refreshToken: string, @Req() req: CustomRequest) {
+    const newAccessToken = req.accessToken;
+    return newAccessToken;
   }
 }
